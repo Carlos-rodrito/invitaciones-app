@@ -17,3 +17,10 @@ async function crearEvento() {
     const link = `${base}invitacion.html?id=${evento.id}`;
     document.getElementById("link").innerText = link;
 }
+app.get("/api/eventos/:id/asistentes", (req, res) => {
+    const evento = eventos.find(e => e.id === req.params.id);
+
+    if (!evento) return res.status(404).send("Evento no encontrado");
+
+    res.json(evento.asistentes);
+});
