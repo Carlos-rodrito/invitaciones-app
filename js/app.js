@@ -13,6 +13,7 @@ async function crearEvento() {
 
     const evento = await res.json();
 
-    const link = `invitacion.html?id=${evento.id}`;
+    const base = window.location.origin + "/invitaciones-app/";
+    const link = `${base}invitacion.html?id=${evento.id}`;
     document.getElementById("link").innerText = link;
 }

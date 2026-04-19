@@ -13,7 +13,7 @@ async function cargarEvento() {
 async function confirmar() {
     const nombre = document.getElementById("nombre").value;
 
-    await fetch(`http://localhost:3000/api/eventos/${id}/rsvp`, {
+    await fetch(`https://invitaciones-backend.onrender.com/api/eventos/${id}/rsvp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombre })
