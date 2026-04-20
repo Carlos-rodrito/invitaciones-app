@@ -4,7 +4,7 @@ const GUARDADO = localStorage.getItem("auth");
 function generarQR(id) {
     const base = window.location.origin + "/invitaciones-app/";
     const link = `${base}invitacion.html?id=${id}`;
-
+    document.querySelector("h2").innerText = "QR del evento: " + id;
     const canvas = document.getElementById("qr");
 
     QRCode.toCanvas(canvas, link, function (error) {
