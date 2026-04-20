@@ -1,17 +1,28 @@
-const params = new URLSearchParams(window.location.search);
-const id = params.get("id");
+async function cargarEventos() {
+    const res = await fetch("https://invitaciones-backend.onrender.com/api/eventos");
+    const eventos = await res.json();
 
-// Mostrar ID (esto sí va fuera)
-document.getElementById("eventoId").innerText = "Evento ID: " + id;
+    const contenedor = document.getElementById("eventos");
+    contenedor.innerHTML = "";
 
-async function cargarAsistentes() {
-    const res = await fetch(`https://invitaciones-backend.onrender.com/api/eventos/${id}/asistentes`);
-    if (!res.ok) {
-    alert("Error cargando asistentes");
-    return;
+    eventos.forEach(ev => {
+        const li = document.createElement("li");
+
+        li.innerHTML = `
+            <strong>${ev.titulo}</strong> - ${ev.fecha}
+            <button onclick="verAsistentes('${ev._id}')">Ver asistentes</button>
+        `;
+
+        contenedor.appendChild(li);
+    });
 }
 
-const asistentes = await res.json();
+async function verAsistentes(id) {
+    const res = await fetch(`https://invitaciones-backend.onrender.com/api/eventos/${id}/asistentes`);
+    const asistentes = await res.json();
+
+    document.getElementById("eventoId").innerText = "Evento ID: " + id;
+    document.getElementById("total").innerText = "Total: " + asistentes.length;
 
     const lista = document.getElementById("lista");
     lista.innerHTML = "";
@@ -21,9 +32,6 @@ const asistentes = await res.json();
         li.innerText = nombre;
         lista.appendChild(li);
     });
-
-    // 👉 AQUÍ sí existe asistentes
-    document.getElementById("total").innerText = "Total: " + asistentes.length;
 }
 
-cargarAsistentes();
+cargarEventos();
