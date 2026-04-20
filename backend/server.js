@@ -1,13 +1,14 @@
+require("dotenv").config(); // Añade esto al inicio
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
+const fs = require("fs"); // Para borrar los archivos locales
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-const multer = require("multer");
-const cloudinary = require("cloudinary").v2;
 
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
@@ -17,94 +18,34 @@ cloudinary.config({
 
 const upload = multer({ dest: "uploads/" });
 
-// 🔗 Conexión a MongoDB
+// Conexión a MongoDB
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("MongoDB conectado"))
     .catch(err => console.log(err));
 
-// 🧱 Modelo
-const EventoSchema = new mongoose.Schema({
-    titulo: String,
-    fecha: String,
-    lugar: String,
-    tipo: String,        // 👈 nuevo
-    imagen: String,      // 👈 nuevo
-    video: String,       // 👈 nuevo
-    musica: String,      // 👈 nuevo
-    asistentes: [String]
-});
+// ... (Tu modelo EventoSchema va aquí) ...
 
-const Evento = mongoose.model("Evento", EventoSchema);
-
-// 🟢 Ruta base
-app.get("/", (req, res) => {
-    res.send("API funcionando");
-});
-
-// 🟡 Obtener TODOS los eventos
-app.get("/api/eventos", async (req, res) => {
-    const eventos = await Evento.find().sort({ _id: -1 });
-    res.json(eventos);
-});
-
-// 🟢 Crear evento
-app.post("/api/eventos", async (req, res) => {
-    const evento = new Evento({
-        ...req.body,
-        asistentes: []
-    });
-
-    await evento.save();
-    res.json(evento);
-});
-
-// 🔵 Obtener evento
-app.get("/api/eventos/:id", async (req, res) => {
-    const evento = await Evento.findById(req.params.id);
-    res.json(evento);
-});
-
-// 🟣 Confirmar asistencia
-app.post("/api/eventos/:id/rsvp", async (req, res) => {
-    const evento = await Evento.findById(req.params.id);
-
-    if (!evento) return res.status(404).send("No encontrado");
-
-    evento.asistentes.push(req.body.nombre);
-    await evento.save();
-
-    res.json({ ok: true });
-});
-
-// 🟡 Obtener asistentes
-app.get("/api/eventos/:id/asistentes", async (req, res) => {
-    const evento = await Evento.findById(req.params.id);
-
-    if (!evento) return res.status(404).send("Evento no encontrado");
-
-    res.json(evento.asistentes);
-});
-
-// 🚀 Puerto (Render)
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-    console.log("Servidor corriendo en puerto", PORT);
-});
-
+// RUTA DE UPLOAD (Moverla arriba del app.listen)
 app.post("/upload", upload.single("imagen"), async (req, res) => {
     try {
-        // 👉 si no hay archivo
         if (!req.file) {
             return res.json({ url: "" });
         }
-
         const result = await cloudinary.uploader.upload(req.file.path);
+        
+        // Eliminar el archivo temporal del servidor local
+        fs.unlinkSync(req.file.path); 
 
         res.json({ url: result.secure_url });
-
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Error subiendo imagen" });
     }
+});
+
+// ... (El resto de tus rutas de API van aquí) ...
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log("Servidor corriendo en puerto", PORT);
 });

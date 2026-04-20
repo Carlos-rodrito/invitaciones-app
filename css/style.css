@@ -1,12 +1,17 @@
+/* 🟢 1. Reset universal para evitar que el padding rompa los anchos */
+* {
+    box-sizing: border-box;
+}
+
 body {
     margin: 0;
-    padding: 0;
+    padding: 20px; /* Da un poco de respiro en los bordes para móviles */
     font-family: 'Poppins', sans-serif;
     background: linear-gradient(135deg, #f5f7fa, #e4ecf7);
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    min-height: 100vh; /* 🟢 2. Cambiado de 'height' a 'min-height' para permitir scroll */
 }
 
 /* Tarjeta */
@@ -14,77 +19,94 @@ body {
     background: white;
     padding: 40px;
     border-radius: 20px;
-    width: 350px;
+    width: 100%; /* 🟢 3. Fluido para cualquier pantalla */
+    max-width: 400px; /* 🟢 3. Tope máximo para que no se vea gigante en PC */
     text-align: center;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    animation: fadeIn 1s ease;
 }
 
 /* Título elegante */
 .card h1 {
     font-family: 'Playfair Display', serif;
     margin-bottom: 20px;
+    color: #222;
 }
 
 /* Info */
 .info {
     margin: 10px 0;
+    color: #555;
 }
 
 /* Input */
-input {
+input, select {
     width: 100%;
-    padding: 10px;
+    padding: 12px;
     margin-top: 15px;
     border-radius: 10px;
-    border: 1px solid #ccc;
+    border: 1px solid #ddd;
+    font-family: 'Poppins', sans-serif; /* Unifica la fuente en los inputs */
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+input:focus, select:focus {
+    border-color: #4CAF50; /* Un pequeño detalle cuando el usuario hace clic */
 }
 
 /* Botón */
 button {
-    margin-top: 15px;
-    padding: 10px;
+    margin-top: 20px;
+    padding: 12px;
     width: 100%;
     border: none;
     border-radius: 10px;
     background: #4CAF50;
     color: white;
     font-size: 16px;
+    font-weight: bold;
     cursor: pointer;
+    transition: background 0.3s, transform 0.1s; /* Animación suave */
 }
 
 button:hover {
     background: #45a049;
 }
 
-/* BODA */
-body.boda {
-    background: linear-gradient(135deg, #fdfcfb, #e2d1c3);
+button:active {
+    transform: scale(0.98); /* Efecto de "hundimiento" al hacer clic */
 }
 
-/* QUINCE */
-body.quince {
-    background: linear-gradient(135deg, #ffdde1, #ee9ca7);
-}
-
-/* CUMPLE */
-body.cumple {
-    background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
-}
-
-/* CORPORATIVO */
-body.corporativo {
-    background: #f4f4f4;
-}
-
+/* Imagen del evento */
 .img-evento {
     width: 100%;
+    max-height: 250px; /* 🟢 4. Evita que una imagen vertical ocupe toda la pantalla */
+    object-fit: cover; /* 🟢 4. Recorta bonito sin deformar */
     border-radius: 15px;
     margin-bottom: 15px;
 }
 
-.card {
-    animation: fadeIn 1s ease;
+/* Video */
+video {
+    border-radius: 10px;
+    margin-top: 10px;
+    margin-bottom: 10px;
 }
+
+/* Separador */
+hr {
+    border: 0;
+    height: 1px;
+    background: #eee;
+    margin: 20px 0;
+}
+
+/* Temas / Estilos de fondo */
+body.boda { background: linear-gradient(135deg, #fdfcfb, #e2d1c3); }
+body.quince { background: linear-gradient(135deg, #ffdde1, #ee9ca7); }
+body.cumple { background: linear-gradient(135deg, #a1c4fd, #c2e9fb); }
+body.corporativo { background: #e0eafc; } /* Ligeramente ajustado para verse más "pro" */
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px);}
