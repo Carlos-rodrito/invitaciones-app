@@ -1,6 +1,21 @@
+const PASSWORD = "Eventos-2538"; // cámbiala por la que quieras
+
+function verificarAcceso() {
+    const pass = prompt("Ingresa la contraseña:");
+
+    if (pass !== PASSWORD) {
+        alert("Contraseña incorrecta");
+        document.body.innerHTML = "<h1>Acceso denegado</h1>";
+        return false;
+    }
+
+    return true;
+}
+
 async function cargarEventos() {
     const res = await fetch("https://invitaciones-backend.onrender.com/api/eventos");
     const eventos = await res.json();
+
 
     const contenedor = document.getElementById("eventos");
     contenedor.innerHTML = "";
@@ -34,4 +49,6 @@ async function verAsistentes(id) {
     });
 }
 
-cargarEventos();
+if (verificarAcceso()) {
+    cargarEventos();
+}
