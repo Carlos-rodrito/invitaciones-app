@@ -26,6 +26,12 @@ app.get("/", (req, res) => {
     res.send("API funcionando");
 });
 
+// 🟡 Obtener TODOS los eventos
+app.get("/api/eventos", async (req, res) => {
+    const eventos = await Evento.find().sort({ _id: -1 });
+    res.json(eventos);
+});
+
 // 🟢 Crear evento
 app.post("/api/eventos", async (req, res) => {
     const evento = new Evento({
