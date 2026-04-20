@@ -33,13 +33,7 @@ async function crearEvento() {
         alert("Error creando evento");
     }
 }
-app.get("/api/eventos/:id/asistentes", (req, res) => {
-    const evento = eventos.find(e => e.id === req.params.id);
 
-    if (!evento) return res.status(404).send("Evento no encontrado");
-
-    res.json(evento.asistentes);
-});
 
 async function subirImagen() {
     const fileInput = document.getElementById("imagen");

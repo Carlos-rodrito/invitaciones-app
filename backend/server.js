@@ -93,6 +93,18 @@ app.listen(PORT, () => {
 });
 
 app.post("/upload", upload.single("imagen"), async (req, res) => {
-    const result = await cloudinary.uploader.upload(req.file.path);
-    res.json({ url: result.secure_url });
+    try {
+        // 👉 si no hay archivo
+        if (!req.file) {
+            return res.json({ url: "" });
+        }
+
+        const result = await cloudinary.uploader.upload(req.file.path);
+
+        res.json({ url: result.secure_url });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error subiendo imagen" });
+    }
 });
