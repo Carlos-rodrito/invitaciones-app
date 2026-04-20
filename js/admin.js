@@ -82,7 +82,7 @@ function compartirWhatsApp(id, titulo) {
     const base = window.location.origin + "/invitaciones-app/";
     const link = `${base}invitacion.html?id=${id}`;
 
-    const mensaje = `🎉 Estás invitado a: ${titulo}\n\nConfirma tu asistencia aquí:\n${link}`;
+    const mensaje = `🎉 *${titulo}*\n\n📅 ¡Estás invitado!\n\nConfirma aquí 👇\n${link}`;
 
     const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
 
