@@ -1,50 +1,71 @@
 const express = require("express");
 const cors = require("cors");
+const mongoose = require("mongoose");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-let eventos = [];
+// 🔗 Conexión a MongoDB
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log("MongoDB conectado"))
+    .catch(err => console.log(err));
 
+// 🧱 Modelo
+const EventoSchema = new mongoose.Schema({
+    titulo: String,
+    fecha: String,
+    lugar: String,
+    asistentes: [String]
+});
+
+const Evento = mongoose.model("Evento", EventoSchema);
+
+// 🟢 Ruta base
 app.get("/", (req, res) => {
     res.send("API funcionando");
 });
 
-app.post("/api/eventos", (req, res) => {
-    const evento = {
-        id: Date.now().toString(),
+// 🟢 Crear evento
+app.post("/api/eventos", async (req, res) => {
+    const evento = new Evento({
         ...req.body,
         asistentes: []
-    };
+    });
 
-    eventos.push(evento);
+    await evento.save();
     res.json(evento);
 });
 
-app.get("/api/eventos/:id", (req, res) => {
-    const evento = eventos.find(e => e.id === req.params.id);
+// 🔵 Obtener evento
+app.get("/api/eventos/:id", async (req, res) => {
+    const evento = await Evento.findById(req.params.id);
     res.json(evento);
 });
 
-app.post("/api/eventos/:id/rsvp", (req, res) => {
-    const evento = eventos.find(e => e.id === req.params.id);
+// 🟣 Confirmar asistencia
+app.post("/api/eventos/:id/rsvp", async (req, res) => {
+    const evento = await Evento.findById(req.params.id);
 
     if (!evento) return res.status(404).send("No encontrado");
 
     evento.asistentes.push(req.body.nombre);
+    await evento.save();
+
     res.json({ ok: true });
 });
 
-// 🔥 IMPORTANTE PARA RENDER
-const PORT = process.env.PORT || 3000;
-app.get("/api/eventos/:id/asistentes", (req, res) => {
-    const evento = eventos.find(e => e.id === req.params.id);
+// 🟡 Obtener asistentes
+app.get("/api/eventos/:id/asistentes", async (req, res) => {
+    const evento = await Evento.findById(req.params.id);
 
     if (!evento) return res.status(404).send("Evento no encontrado");
 
     res.json(evento.asistentes);
 });
+
+// 🚀 Puerto (Render)
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
     console.log("Servidor corriendo en puerto", PORT);
