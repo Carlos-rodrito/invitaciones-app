@@ -2,8 +2,9 @@
 const API_URL = "https://invitaciones-backend.onrender.com";
 
 async function crearEvento() {
-    // Referencias a los elementos del DOM
-    const btnCrear = document.querySelector("button[onclick='crearEvento()']");
+    // Referencias a los elementos del DOM actualizados
+    const btnCrear = document.getElementById("btn-crear"); 
+    const mensajeServidor = document.getElementById("mensaje-servidor"); 
     const tituloInput = document.getElementById("titulo");
     const fechaInput = document.getElementById("fecha");
     const lugarInput = document.getElementById("lugar");
@@ -14,11 +15,10 @@ async function crearEvento() {
         return;
     }
 
-    // ⏳ 2. Feedback visual: Bloquear el botón para evitar clics dobles
-    const textoOriginal = btnCrear.innerText;
+    // ⏳ 2. Feedback visual: Bloquear el botón y mostrar el aviso de Render
     btnCrear.disabled = true;
-    btnCrear.innerText = "Creando evento (esto puede tardar unos segundos)...";
-    btnCrear.style.opacity = "0.7";
+    btnCrear.innerText = "Procesando...";
+    mensajeServidor.style.display = "block"; // 🟢 Mostramos el mensaje naranja
 
     try {
         // 👇 Subir imagen primero
@@ -68,10 +68,10 @@ async function crearEvento() {
         console.error("Error al crear evento:", error);
         alert("Hubo un error creando el evento. Revisa tu conexión a internet.");
     } finally {
-        // 🔄 5. Restaurar el botón siempre (falle o tenga éxito)
+        // 🔄 5. Restaurar el botón y ocultar el aviso siempre (falle o tenga éxito)
         btnCrear.disabled = false;
-        btnCrear.innerText = textoOriginal;
-        btnCrear.style.opacity = "1";
+        btnCrear.innerText = "Generar Invitación";
+        mensajeServidor.style.display = "none"; // 🔴 Ocultamos el mensaje naranja
     }
 }
 

@@ -2,29 +2,65 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Crear Invitación</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel - Crear Invitación</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/panel.css">
 </head>
 <body>
 
-<h1>Crear Evento</h1>
+<div class="container">
+    <h1>Crear Nuevo Evento</h1>
 
-<input id="titulo" placeholder="Título del evento">
-<input id="fecha" type="date">
-<input id="lugar" placeholder="Lugar">
+    <div class="form-group">
+        <label for="titulo">Título del Evento</label>
+        <input id="titulo" placeholder="Ej. Boda de Ana y Juan">
+    </div>
 
-<select id="tipo">
-    <option value="boda">Boda</option>
-    <option value="quince">15 años</option>
-    <option value="cumple">Cumpleaños</option>
-    <option value="corporativo">Corporativo</option>
-</select>
+    <div class="form-group">
+        <label for="fecha">Fecha y Hora</label>
+        <input id="fecha" type="datetime-local">
+    </div>
 
-<input type="file" id="imagen">
-<input type="text" id="video" placeholder="URL de video">
-<input type="text" id="musica" placeholder="URL de música">
-<button onclick="crearEvento()">Crear</button>
+    <div class="form-group">
+        <label for="lugar">Lugar / Dirección</label>
+        <input id="lugar" placeholder="Ej. Salón Las Margaritas">
+    </div>
 
-<p id="link"></p>
+    <div class="form-group">
+        <label for="tipo">Tema Visual</label>
+        <select id="tipo">
+            <option value="boda">Elegante (Boda)</option>
+            <option value="quince">Rosado (15 años)</option>
+            <option value="cumple">Festivo (Cumpleaños)</option>
+            <option value="corporativo">Minimalista (Corporativo)</option>
+        </select>
+    </div>
+
+    <hr class="separador">
+
+    <div class="form-group">
+        <label for="imagen">Imagen Principal</label>
+        <input type="file" id="imagen" accept="image/*">
+        <span class="help-text">Se subirá automáticamente a la nube.</span>
+    </div>
+
+    <div class="form-group">
+        <label for="video">Video (Opcional)</label>
+        <input type="text" id="video" placeholder="URL directa de un archivo .mp4">
+    </div>
+
+    <div class="form-group">
+        <label for="musica">Música de Fondo (Opcional)</label>
+        <input type="text" id="musica" placeholder="URL de archivo .mp3">
+    </div>
+
+    <button id="btn-crear" onclick="crearEvento()">Generar Invitación</button>
+    
+    <div id="mensaje-servidor">⏳ Conectando con el servidor... La primera vez puede tardar hasta un minuto. ¡No cierres la página!</div>
+
+    <div id="link"></div>
+</div>
 
 <script src="js/app.js"></script>
 </body>

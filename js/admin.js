@@ -1,145 +1,182 @@
-const PASSWORD = "Eventos-2538"; // cámbiala por la que quieras
-const GUARDADO = localStorage.getItem("auth");
+const API_URL = "https://invitaciones-backend.onrender.com";
+const PASSWORD = "Eventos-2538"; 
+
 let asistentesGlobal = [];
 
+// ==========================================
+// SISTEMA DE ACCESO (LOGIN)
+// ==========================================
+document.addEventListener("DOMContentLoaded", () => {
+    if (localStorage.getItem("auth") === "ok") {
+        mostrarDashboard();
+    }
+});
+
+function intentarAcceso() {
+    const pass = document.getElementById("pass").value;
+    
+    if (pass === PASSWORD) {
+        localStorage.setItem("auth", "ok");
+        mostrarDashboard();
+    } else {
+        document.getElementById("login-error").style.display = "block";
+    }
+}
+
+function mostrarDashboard() {
+    document.getElementById("login-box").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    cargarEventos();
+}
+
+// ==========================================
+// UTILIDADES PARA ENLACES
+// ==========================================
+function obtenerEnlaceInvitacion(id) {
+    const rutaBase = window.location.pathname.replace("admin.html", "");
+    const base = window.location.origin + rutaBase;
+    return `${base}invitacion.html?id=${id}`;
+}
+
+// ==========================================
+// GESTIÓN DE EVENTOS
+// ==========================================
+async function cargarEventos() {
+    try {
+        const res = await fetch(`${API_URL}/api/eventos`);
+        if (!res.ok) throw new Error("Fallo al obtener eventos");
+        
+        const eventos = await res.json();
+        const contenedor = document.getElementById("eventos");
+        contenedor.innerHTML = ""; // Limpiar el "Cargando..."
+
+        if (eventos.length === 0) {
+            contenedor.innerHTML = "<p style='text-align:center;'>Aún no hay eventos creados.</p>";
+            return;
+        }
+
+        eventos.forEach(ev => {
+            const div = document.createElement("div");
+            div.className = "evento-item";
+
+            div.innerHTML = `
+                <div class="evento-info">
+                    <strong>${ev.titulo}</strong>
+                    <span>📅 ${ev.fecha || "Fecha sin definir"}</span>
+                </div>
+                <div class="evento-acciones">
+                    <button onclick="verDetalles('${ev._id}', '${ev.titulo}')">Ver Asistentes / QR</button>
+                    <button onclick="copiarLink('${ev._id}')">Copiar Enlace</button>
+                    <button onclick="compartirWhatsApp('${ev._id}', '${ev.titulo}')" style="background:#25D366; color:white;">WhatsApp</button>
+                </div>
+            `;
+            contenedor.appendChild(div);
+        });
+    } catch (error) {
+        console.error("Error:", error);
+        document.getElementById("eventos").innerHTML = "<p style='color:red;'>Error al conectar con el servidor.</p>";
+    }
+}
+
+async function verDetalles(id, titulo) {
+    document.getElementById("detalles-evento").style.display = "block";
+    document.getElementById("evento-titulo-detalle").innerText = `Detalles: ${titulo}`;
+    
+    // 1. Generar QR
+    generarQR(id);
+
+    // 2. Cargar Asistentes
+    try {
+        const res = await fetch(`${API_URL}/api/eventos/${id}/asistentes`);
+        const asistentes = await res.json();
+        asistentesGlobal = asistentes;
+
+        document.getElementById("total").innerText = asistentes.length;
+
+        const lista = document.getElementById("lista");
+        lista.innerHTML = "";
+
+        if (asistentes.length === 0) {
+            lista.innerHTML = "<li style='color:#888;'>Nadie ha confirmado aún.</li>";
+        } else {
+            asistentes.forEach(nombre => {
+                const li = document.createElement("li");
+                li.innerText = `👤 ${nombre}`;
+                lista.appendChild(li);
+            });
+        }
+    } catch (error) {
+        console.error("Error cargando asistentes", error);
+    }
+}
+
+// ==========================================
+// FUNCIONES DE COMPARTIR Y EXPORTAR
+// ==========================================
+function copiarLink(id) {
+    const link = obtenerEnlaceInvitacion(id);
+    navigator.clipboard.writeText(link)
+        .then(() => alert("¡Enlace copiado al portapapeles!"))
+        .catch(() => alert("Error al copiar el enlace"));
+}
+
+function compartirWhatsApp(id, titulo) {
+    const link = obtenerEnlaceInvitacion(id);
+    const mensaje = `🎉 *${titulo}*\n\n📅 ¡Estás invitado!\n\nConfirma tu asistencia aquí 👇\n${link}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, "_blank");
+}
+
+function generarQR(id) {
+    const link = obtenerEnlaceInvitacion(id);
+    const canvas = document.getElementById("qr");
+
+    QRCode.toCanvas(canvas, link, { width: 180, margin: 1 }, function (error) {
+        if (error) console.error("Error generando QR", error);
+    });
+}
 
 function exportarCSV() {
     if (asistentesGlobal.length === 0) {
-        alert("No hay asistentes para exportar");
+        alert("No hay asistentes para exportar.");
         return;
     }
 
-    let csv = "Nombre\n";
-
+    let csv = "Nombre del Asistente\n";
     asistentesGlobal.forEach(nombre => {
-        csv += nombre + "\n";
+        csv += `"${nombre}"\n`; // Comillas por si el nombre tiene comas
     });
 
-    const blob = new Blob([csv], { type: "text/csv" });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
-
     const a = document.createElement("a");
     a.href = url;
-    a.download = "asistentes.xls";
+    a.download = "lista_asistentes.csv"; // Extensión correcta
     a.click();
-
     URL.revokeObjectURL(url);
 }
 
 function exportarPDF() {
     if (asistentesGlobal.length === 0) {
-        alert("No hay asistentes");
+        alert("No hay asistentes para exportar.");
         return;
     }
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
-    doc.setFontSize(16);
-    doc.text("Lista de Asistentes", 10, 10);
-
+    doc.setFontSize(18);
+    const titulo = document.getElementById("evento-titulo-detalle").innerText;
+    doc.text(titulo, 10, 15);
+    
     doc.setFontSize(12);
+    doc.text(`Total de confirmados: ${asistentesGlobal.length}`, 10, 25);
 
+    doc.setFontSize(10);
     asistentesGlobal.forEach((nombre, index) => {
-        doc.text(`${index + 1}. ${nombre}`, 10, 20 + (index * 8));
+        // Imprime en lista hacia abajo, calculando la posición Y
+        doc.text(`${index + 1}. ${nombre}`, 10, 40 + (index * 8));
     });
 
-    doc.save("asistentes.pdf");
-}
-
-function generarQR(id) {
-    const base = window.location.origin + "/invitaciones-app/";
-    const link = `${base}invitacion.html?id=${id}`;
-    document.querySelector("h2").innerText = "QR del evento: " + id;
-    const canvas = document.getElementById("qr");
-
-    QRCode.toCanvas(canvas, link, function (error) {
-        if (error) {
-            console.error(error);
-            alert("Error generando QR");
-        } else {
-            console.log("QR generado");
-        }
-    });
-}
-
-function verificarAcceso() {
-    if (localStorage.getItem("auth") === "ok") return true;
-
-    const pass = prompt("Ingresa la contraseña:");
-
-    if (pass !== PASSWORD) {
-        alert("Contraseña incorrecta");
-        document.body.innerHTML = "<h1>Acceso denegado</h1>";
-        return false;
-    }
-
-    localStorage.setItem("auth", "ok");
-    return true;
-}
-
-function compartirWhatsApp(id, titulo) {
-    const base = window.location.origin + "/invitaciones-app/";
-    const link = `${base}invitacion.html?id=${id}`;
-
-    const mensaje = `🎉 *${titulo}*\n\n📅 ¡Estás invitado!\n\nConfirma aquí 👇\n${link}`;
-
-    const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-
-    window.open(url, "_blank");
-}
-
-async function cargarEventos() {
-    const res = await fetch("https://invitaciones-backend.onrender.com/api/eventos");
-    const eventos = await res.json();
-
-
-    const contenedor = document.getElementById("eventos");
-    contenedor.innerHTML = "";
-
-    eventos.forEach(ev => {
-        const li = document.createElement("li");
-
-        li.innerHTML = `
-            <strong>${ev.titulo}</strong> - ${ev.fecha}
-            <button onclick="verAsistentes('${ev._id}')">Ver asistentes</button>
-            <button onclick="copiarLink('${ev._id}')">Copiar enlace</button>
-            <button onclick="generarQR('${ev._id}')">QR</button>
-            <button onclick="compartirWhatsApp('${ev._id}', '${ev.titulo}')">WhatsApp</button>
-            
-        `;
-
-        contenedor.appendChild(li);
-    });
-}
-
-async function verAsistentes(id) {
-    const res = await fetch(`https://invitaciones-backend.onrender.com/api/eventos/${id}/asistentes`);
-    const asistentes = await res.json();
-    asistentesGlobal = asistentes;
-
-    document.getElementById("eventoId").innerText = "Evento ID: " + id;
-    document.getElementById("total").innerText = "Total: " + asistentes.length;
-
-    const lista = document.getElementById("lista");
-    lista.innerHTML = "";
-
-    asistentes.forEach(nombre => {
-        const li = document.createElement("li");
-        li.innerText = nombre;
-        lista.appendChild(li);
-    });
-}
-
-function copiarLink(id) {
-    const base = window.location.origin + "/invitaciones-app/";
-    const link = `${base}invitacion.html?id=${id}`;
-
-    navigator.clipboard.writeText(link)
-        .then(() => console.log("Copiado"))
-        .catch(() => alert("Error al copiar"));
-}
-
-if (verificarAcceso()) {
-    cargarEventos();
+    doc.save("asistentes_evento.pdf");
 }

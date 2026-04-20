@@ -2,24 +2,127 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/panel.css">
+    <style>
+        /* Estilos extra específicos para el panel admin */
+        .admin-container {
+            max-width: 800px; /* Un poco más ancho para las listas */
+        }
+        
+        .evento-item {
+            background: #fafafa;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .evento-info strong {
+            font-size: 16px;
+            color: #222;
+            display: block;
+        }
+
+        .evento-info span {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .evento-acciones button {
+            width: auto;
+            padding: 8px 12px;
+            margin: 0 5px 5px 0;
+            font-size: 13px;
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .evento-acciones button:hover {
+            background: #4CAF50;
+            color: white;
+        }
+
+        /* Ocultar elementos al inicio */
+        #dashboard { display: none; }
+        
+        #detalles-evento {
+            display: none;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px dashed #ccc;
+            margin-top: 20px;
+        }
+
+        #qr-container { text-align: center; margin-top: 15px; }
+        #qr { border-radius: 8px; }
+
+        .asistentes-list {
+            list-style: none;
+            padding: 0;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .asistentes-list li {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        .asistentes-list li:last-child { border-bottom: none; }
+    </style>
 </head>
 <body>
 
-<h1>Eventos</h1>
+<div class="container" id="login-box">
+    <h1>Acceso Restringido</h1>
+    <div class="form-group">
+        <label for="pass">Contraseña de Administrador</label>
+        <input type="password" id="pass" placeholder="Ingresa la contraseña">
+    </div>
+    <button onclick="intentarAcceso()">Ingresar</button>
+    <p id="login-error" style="color: red; text-align: center; display: none; font-size: 14px;">Contraseña incorrecta</p>
+</div>
 
-<ul id="eventos"></ul>
+<div class="container admin-container" id="dashboard">
+    <h1>Tus Eventos</h1>
+    
+    <div id="eventos">
+        <p style="text-align:center; color:#888;">Cargando eventos...</p>
+    </div>
 
-<hr>
+    <div id="detalles-evento">
+        <h2 id="evento-titulo-detalle" style="margin-top: 0;">Selecciona un evento</h2>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+            <div style="flex: 1; min-width: 200px;">
+                <h3 style="font-size: 16px;">Código QR</h3>
+                <div id="qr-container">
+                    <canvas id="qr"></canvas>
+                </div>
+            </div>
 
-<h2>Asistentes</h2>
-<h2>Código QR</h2>
-<canvas id="qr"></canvas>
-<p id="eventoId"></p>
-<p id="total"></p>
-<button onclick="exportarCSV()">Exportar asistentes</button>
-<button onclick="exportarPDF()">Exportar PDF</button>
-<ul id="lista"></ul>
+            <div style="flex: 2; min-width: 250px;">
+                <h3 style="font-size: 16px;">Lista de Asistentes (<span id="total">0</span>)</h3>
+                <ul id="lista" class="asistentes-list"></ul>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button onclick="exportarCSV()">Exportar .CSV</button>
+                    <button onclick="exportarPDF()">Exportar PDF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
