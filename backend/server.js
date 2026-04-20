@@ -38,6 +38,13 @@ app.post("/api/eventos/:id/rsvp", (req, res) => {
 
 // 🔥 IMPORTANTE PARA RENDER
 const PORT = process.env.PORT || 3000;
+app.get("/api/eventos/:id/asistentes", (req, res) => {
+    const evento = eventos.find(e => e.id === req.params.id);
+
+    if (!evento) return res.status(404).send("Evento no encontrado");
+
+    res.json(evento.asistentes);
+});
 
 app.listen(PORT, () => {
     console.log("Servidor corriendo en puerto", PORT);
