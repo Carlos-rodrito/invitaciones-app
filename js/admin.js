@@ -30,6 +30,7 @@ async function cargarEventos() {
         li.innerHTML = `
             <strong>${ev.titulo}</strong> - ${ev.fecha}
             <button onclick="verAsistentes('${ev._id}')">Ver asistentes</button>
+            <button onclick="copiarLink('${ev._id}')">Copiar enlace</button>
         `;
 
         contenedor.appendChild(li);
@@ -51,6 +52,15 @@ async function verAsistentes(id) {
         li.innerText = nombre;
         lista.appendChild(li);
     });
+}
+
+function copiarLink(id) {
+    const base = window.location.origin + "/invitaciones-app/";
+    const link = `${base}invitacion.html?id=${id}`;
+
+    navigator.clipboard.writeText(link)
+        .then(() => alert("Enlace copiado"))
+        .catch(() => alert("Error al copiar"));
 }
 
 if (verificarAcceso()) {
