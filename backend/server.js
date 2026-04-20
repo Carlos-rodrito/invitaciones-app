@@ -16,6 +16,10 @@ const EventoSchema = new mongoose.Schema({
     titulo: String,
     fecha: String,
     lugar: String,
+    tipo: String,        // 👈 nuevo
+    imagen: String,      // 👈 nuevo
+    video: String,       // 👈 nuevo
+    musica: String,      // 👈 nuevo
     asistentes: [String]
 });
 
