@@ -1,27 +1,37 @@
-const imagenUrl = await subirImagen();
+
 
 async function crearEvento() {
-    const data = {
-        titulo: document.getElementById("titulo").value,
-        fecha: document.getElementById("fecha").value,
-        lugar: document.getElementById("lugar").value,
-        tipo: document.getElementById("tipo").value,
-        imagen: imagenUrl,
-        video: document.getElementById("video").value,
-        musica: document.getElementById("musica").value
-    };
+    try {
+        // 👇 subir imagen primero
+        const imagenUrl = await subirImagen();
 
-    const res = await fetch("https://invitaciones-backend.onrender.com/api/eventos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-    });
+        const data = {
+            titulo: document.getElementById("titulo").value,
+            fecha: document.getElementById("fecha").value,
+            lugar: document.getElementById("lugar").value,
+            tipo: document.getElementById("tipo").value,
+            imagen: imagenUrl,
+            video: document.getElementById("video").value,
+            musica: document.getElementById("musica").value
+        };
 
-    const evento = await res.json();
+        const res = await fetch("https://invitaciones-backend.onrender.com/api/eventos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
 
-    const base = window.location.origin + "/invitaciones-app/";
-    const link = `${base}invitacion.html?id=${evento._id}`;
-    document.getElementById("link").innerText = link;
+        const evento = await res.json();
+
+        const base = window.location.origin + "/invitaciones-app/";
+        const link = `${base}invitacion.html?id=${evento._id}`;
+
+        document.getElementById("link").innerText = link;
+
+    } catch (error) {
+        console.error(error);
+        alert("Error creando evento");
+    }
 }
 app.get("/api/eventos/:id/asistentes", (req, res) => {
     const evento = eventos.find(e => e.id === req.params.id);
@@ -32,10 +42,13 @@ app.get("/api/eventos/:id/asistentes", (req, res) => {
 });
 
 async function subirImagen() {
-    const file = document.getElementById("imagen").files[0];
+    const fileInput = document.getElementById("imagen");
+
+    // 👉 si no seleccionó imagen
+    if (!fileInput.files.length) return "";
 
     const formData = new FormData();
-    formData.append("imagen", file);
+    formData.append("imagen", fileInput.files[0]);
 
     const res = await fetch("https://invitaciones-backend.onrender.com/upload", {
         method: "POST",
