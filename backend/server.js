@@ -6,6 +6,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
+
+cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.API_KEY,
+    api_secret: process.env.API_SECRET
+});
+
+const upload = multer({ dest: "uploads/" });
+
 // 🔗 Conexión a MongoDB
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("MongoDB conectado"))
@@ -79,4 +90,9 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
     console.log("Servidor corriendo en puerto", PORT);
+});
+
+app.post("/upload", upload.single("imagen"), async (req, res) => {
+    const result = await cloudinary.uploader.upload(req.file.path);
+    res.json({ url: result.secure_url });
 });

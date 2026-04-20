@@ -1,8 +1,14 @@
+const imagenUrl = await subirImagen();
+
 async function crearEvento() {
     const data = {
         titulo: document.getElementById("titulo").value,
         fecha: document.getElementById("fecha").value,
-        lugar: document.getElementById("lugar").value
+        lugar: document.getElementById("lugar").value,
+        tipo: document.getElementById("tipo").value,
+        imagen: imagenUrl,
+        video: document.getElementById("video").value,
+        musica: document.getElementById("musica").value
     };
 
     const res = await fetch("https://invitaciones-backend.onrender.com/api/eventos", {
@@ -24,3 +30,18 @@ app.get("/api/eventos/:id/asistentes", (req, res) => {
 
     res.json(evento.asistentes);
 });
+
+async function subirImagen() {
+    const file = document.getElementById("imagen").files[0];
+
+    const formData = new FormData();
+    formData.append("imagen", file);
+
+    const res = await fetch("https://invitaciones-backend.onrender.com/upload", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await res.json();
+    return data.url;
+}

@@ -78,6 +78,15 @@ function verificarAcceso() {
     return true;
 }
 
+function whatsapp(id) {
+    const base = window.location.origin + "/invitaciones-app/";
+    const link = `${base}invitacion.html?id=${id}`;
+
+    const url = `https://wa.me/?text=${encodeURIComponent("Te invito a mi evento: " + link)}`;
+
+    window.open(url, "_blank");
+}
+
 async function cargarEventos() {
     const res = await fetch("https://invitaciones-backend.onrender.com/api/eventos");
     const eventos = await res.json();
@@ -94,6 +103,7 @@ async function cargarEventos() {
             <button onclick="verAsistentes('${ev._id}')">Ver asistentes</button>
             <button onclick="copiarLink('${ev._id}')">Copiar enlace</button>
             <button onclick="generarQR('${ev._id}')">QR</button>
+            <button onclick="whatsapp('${ev._id}')">WhatsApp</button>
             
         `;
 

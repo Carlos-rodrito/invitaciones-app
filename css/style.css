@@ -55,3 +55,38 @@ button {
 button:hover {
     background: #45a049;
 }
+
+/* BODA */
+body.boda {
+    background: linear-gradient(135deg, #fdfcfb, #e2d1c3);
+}
+
+/* QUINCE */
+body.quince {
+    background: linear-gradient(135deg, #ffdde1, #ee9ca7);
+}
+
+/* CUMPLE */
+body.cumple {
+    background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+}
+
+/* CORPORATIVO */
+body.corporativo {
+    background: #f4f4f4;
+}
+
+.img-evento {
+    width: 100%;
+    border-radius: 15px;
+    margin-bottom: 15px;
+}
+
+.card {
+    animation: fadeIn 1s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px);}
+    to { opacity: 1; transform: translateY(0);}
+}

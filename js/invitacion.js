@@ -10,6 +10,29 @@ async function cargarEvento() {
     document.getElementById("lugar").innerText = evento.lugar;
 }
 
+if (evento.video) {
+    document.getElementById("videoEvento").src = evento.video;
+}
+if (evento.musica) {
+    document.getElementById("musica").src = evento.musica;
+}
+document.getElementById("imagenEvento").src = evento.imagen;
+document.body.className = evento.tipo;
+
+function iniciarContador(fecha) {
+    const destino = new Date(fecha).getTime();
+
+    setInterval(() => {
+        const ahora = new Date().getTime();
+        const diferencia = destino - ahora;
+
+        const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
+
+        document.getElementById("contador").innerText =
+            "Faltan " + dias + " días";
+    }, 1000);
+}
+
 async function confirmar() {
     const nombre = document.getElementById("nombre").value;
 
@@ -22,4 +45,5 @@ async function confirmar() {
     alert("Asistencia confirmada");
 }
 
+iniciarContador(evento.fecha);
 cargarEvento();
