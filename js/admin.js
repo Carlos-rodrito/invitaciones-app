@@ -1,6 +1,9 @@
 const PASSWORD = "Eventos-2538"; // cámbiala por la que quieras
+const GUARDADO = localStorage.getItem("auth");
 
 function verificarAcceso() {
+    if (localStorage.getItem("auth") === "ok") return true;
+
     const pass = prompt("Ingresa la contraseña:");
 
     if (pass !== PASSWORD) {
@@ -9,6 +12,7 @@ function verificarAcceso() {
         return false;
     }
 
+    localStorage.setItem("auth", "ok");
     return true;
 }
 
