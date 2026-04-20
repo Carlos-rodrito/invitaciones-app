@@ -4,6 +4,7 @@ const id = params.get("id");
 async function cargarEvento() {
     const res = await fetch(`https://invitaciones-backend.onrender.com/api/eventos/${id}`);
     const evento = await res.json();
+    console.log(evento);
 
     // 🟢 Datos básicos
     document.getElementById("titulo").innerText = evento.titulo;
