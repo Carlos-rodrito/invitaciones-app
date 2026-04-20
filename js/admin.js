@@ -78,11 +78,13 @@ function verificarAcceso() {
     return true;
 }
 
-function whatsapp(id) {
+function compartirWhatsApp(id, titulo) {
     const base = window.location.origin + "/invitaciones-app/";
     const link = `${base}invitacion.html?id=${id}`;
 
-    const url = `https://wa.me/?text=${encodeURIComponent("Te invito a mi evento: " + link)}`;
+    const mensaje = `🎉 Estás invitado a: ${titulo}\n\nConfirma tu asistencia aquí:\n${link}`;
+
+    const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
 
     window.open(url, "_blank");
 }
@@ -103,7 +105,7 @@ async function cargarEventos() {
             <button onclick="verAsistentes('${ev._id}')">Ver asistentes</button>
             <button onclick="copiarLink('${ev._id}')">Copiar enlace</button>
             <button onclick="generarQR('${ev._id}')">QR</button>
-            <button onclick="whatsapp('${ev._id}')">WhatsApp</button>
+            <button onclick="compartirWhatsApp('${ev._id}', '${ev.titulo}')">WhatsApp</button>
             
         `;
 
