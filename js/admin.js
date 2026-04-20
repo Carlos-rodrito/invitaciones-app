@@ -1,6 +1,22 @@
 const PASSWORD = "Eventos-2538"; // cámbiala por la que quieras
 const GUARDADO = localStorage.getItem("auth");
 
+function generarQR(id) {
+    const base = window.location.origin + "/invitaciones-app/";
+    const link = `${base}invitacion.html?id=${id}`;
+
+    const canvas = document.getElementById("qr");
+
+    QRCode.toCanvas(canvas, link, function (error) {
+        if (error) {
+            console.error(error);
+            alert("Error generando QR");
+        } else {
+            console.log("QR generado");
+        }
+    });
+}
+
 function verificarAcceso() {
     if (localStorage.getItem("auth") === "ok") return true;
 
@@ -31,6 +47,8 @@ async function cargarEventos() {
             <strong>${ev.titulo}</strong> - ${ev.fecha}
             <button onclick="verAsistentes('${ev._id}')">Ver asistentes</button>
             <button onclick="copiarLink('${ev._id}')">Copiar enlace</button>
+            <button onclick="generarQR('${ev._id}')">QR</button>
+            <button onclick="copiarLink('${ev._id}')">Copiar enlace</button>
         `;
 
         contenedor.appendChild(li);
@@ -59,7 +77,7 @@ function copiarLink(id) {
     const link = `${base}invitacion.html?id=${id}`;
 
     navigator.clipboard.writeText(link)
-        .then(() => alert("Enlace copiado"))
+        .then(() => console.log("Copiado"))
         .catch(() => alert("Error al copiar"));
 }
 
