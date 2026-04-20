@@ -14,7 +14,7 @@ async function crearEvento() {
     const evento = await res.json();
 
     const base = window.location.origin + "/invitaciones-app/";
-    const link = `${base}invitacion.html?id=${evento.id}`;
+    const link = `${base}invitacion.html?id=${evento._id}`;
     document.getElementById("link").innerText = link;
 }
 app.get("/api/eventos/:id/asistentes", (req, res) => {
