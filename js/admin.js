@@ -6,7 +6,12 @@ document.getElementById("eventoId").innerText = "Evento ID: " + id;
 
 async function cargarAsistentes() {
     const res = await fetch(`https://invitaciones-backend.onrender.com/api/eventos/${id}/asistentes`);
-    const asistentes = await res.json();
+    if (!res.ok) {
+    alert("Error cargando asistentes");
+    return;
+}
+
+const asistentes = await res.json();
 
     const lista = document.getElementById("lista");
     lista.innerHTML = "";
