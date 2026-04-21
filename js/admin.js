@@ -3,9 +3,6 @@ const PASSWORD = "Eventos-2538";
 
 let asistentesGlobal = [];
 
-// ==========================================
-// SISTEMA DE ACCESO (LOGIN)
-// ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     if (localStorage.getItem("auth") === "ok") {
         mostrarDashboard();
@@ -29,18 +26,12 @@ function mostrarDashboard() {
     cargarEventos();
 }
 
-// ==========================================
-// UTILIDADES PARA ENLACES
-// ==========================================
 function obtenerEnlaceInvitacion(id) {
     const rutaBase = window.location.pathname.replace("admin.html", "");
     const base = window.location.origin + rutaBase;
     return `${base}invitacion.html?id=${id}`;
 }
 
-// ==========================================
-// GESTIÓN DE EVENTOS
-// ==========================================
 async function cargarEventos() {
     try {
         const res = await fetch(`${API_URL}/api/eventos`);
@@ -48,7 +39,7 @@ async function cargarEventos() {
         
         const eventos = await res.json();
         const contenedor = document.getElementById("eventos");
-        contenedor.innerHTML = ""; // Limpiar el "Cargando..."
+        contenedor.innerHTML = ""; 
 
         if (eventos.length === 0) {
             contenedor.innerHTML = "<p style='text-align:center;'>Aún no hay eventos creados.</p>";
@@ -59,6 +50,11 @@ async function cargarEventos() {
             const div = document.createElement("div");
             div.className = "evento-item";
 
+            // 🟢 Lógica para crear el enlace del panel de cliente
+            const rutaBase = window.location.pathname.replace("admin.html", "");
+            const base = window.location.origin + rutaBase;
+            const linkCliente = ev.tokenCliente ? `${base}cliente.html?token=${ev.tokenCliente}` : "#";
+
             div.innerHTML = `
                 <div class="evento-info">
                     <strong>${ev.titulo}</strong>
@@ -68,6 +64,7 @@ async function cargarEventos() {
                     <button onclick="verDetalles('${ev._id}', '${ev.titulo}')">Ver Asistentes / QR</button>
                     <button onclick="copiarLink('${ev._id}')">Copiar Enlace</button>
                     <button onclick="compartirWhatsApp('${ev._id}', '${ev.titulo}')" style="background:#25D366; color:white;">WhatsApp</button>
+                    ${ev.tokenCliente ? `<button onclick="navigator.clipboard.writeText('${linkCliente}').then(()=>alert('¡Enlace del cliente copiado!'))" style="background:#007BFF; color:white;">Link Cliente</button>` : ''}
                 </div>
             `;
             contenedor.appendChild(div);
@@ -85,11 +82,9 @@ async function verDetalles(id, titulo) {
     generarQR(id);
 
     try {
-        // 1. Obtener los detalles completos del evento (para saber si hay lista VIP)
         const resEvento = await fetch(`${API_URL}/api/eventos/${id}`);
         const evento = await resEvento.json();
 
-        // 2. Obtener quiénes ya confirmaron
         const resAsistentes = await fetch(`${API_URL}/api/eventos/${id}/asistentes`);
         const asistentes = await resAsistentes.json();
         asistentesGlobal = asistentes;
@@ -98,7 +93,6 @@ async function verDetalles(id, titulo) {
         const lista = document.getElementById("lista");
         lista.innerHTML = "";
 
-        // 🟢 RENDERIZAR LISTA VIP CON ENLACES ÚNICOS
         if (evento.listaInvitados && evento.listaInvitados.length > 0) {
             lista.innerHTML = `<li style="background: #eef8f1; padding: 10px; font-weight: bold; border-radius: 5px;">👑 Enlaces VIP Personalizados:</li>`;
             
@@ -109,7 +103,6 @@ async function verDetalles(id, titulo) {
                 li.style.justifyContent = "space-between";
                 li.style.alignItems = "center";
                 
-                // Creamos el enlace único para esta persona
                 const rutaBase = window.location.pathname.replace("admin.html", "");
                 const base = window.location.origin + rutaBase;
                 const linkVip = `${base}invitacion.html?id=${id}&invitado=${encodeURIComponent(invitado)}`;
@@ -131,12 +124,10 @@ async function verDetalles(id, titulo) {
             lista.innerHTML += `<li style="margin-top:15px; font-weight: bold;">Asistentes extra (Si los hay):</li>`;
         }
 
-        // 3. Renderizar Asistentes (que ya confirmaron)
         if (asistentes.length === 0) {
             lista.innerHTML += "<li style='color:#888;'>Nadie ha confirmado aún.</li>";
         } else {
             asistentes.forEach(nombre => {
-                // Solo lo mostramos si no es parte de la lista VIP (para no duplicarlo visualmente)
                 const esVip = evento.listaInvitados && evento.listaInvitados.some(v => v.toLowerCase() === nombre.toLowerCase());
                 if (!esVip) {
                     const li = document.createElement("li");
@@ -150,9 +141,6 @@ async function verDetalles(id, titulo) {
     }
 }
 
-// ==========================================
-// FUNCIONES DE COMPARTIR Y EXPORTAR
-// ==========================================
 function copiarLink(id) {
     const link = obtenerEnlaceInvitacion(id);
     navigator.clipboard.writeText(link)
@@ -184,14 +172,14 @@ function exportarCSV() {
 
     let csv = "Nombre del Asistente\n";
     asistentesGlobal.forEach(nombre => {
-        csv += `"${nombre}"\n`; // Comillas por si el nombre tiene comas
+        csv += `"${nombre}"\n`; 
     });
 
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "lista_asistentes.csv"; // Extensión correcta
+    a.download = "lista_asistentes.csv"; 
     a.click();
     URL.revokeObjectURL(url);
 }
@@ -214,7 +202,6 @@ function exportarPDF() {
 
     doc.setFontSize(10);
     asistentesGlobal.forEach((nombre, index) => {
-        // Imprime en lista hacia abajo, calculando la posición Y
         doc.text(`${index + 1}. ${nombre}`, 10, 40 + (index * 8));
     });
 
