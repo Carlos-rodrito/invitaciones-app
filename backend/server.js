@@ -31,8 +31,11 @@ const EventoSchema = new mongoose.Schema({
     fecha: String,
     lugar: String,
     tipo: String,
-    imagenes: [String], // 🟢 Ahora es un arreglo de textos (URLs)
-    asistentes: [String]
+    imagenes: [String],
+    asistentes: [String],
+    // 🟢 NUEVOS CAMPOS:
+    limiteAsistentes: Number, 
+    listaInvitados: [String] 
 });
 
 const Evento = mongoose.model("Evento", EventoSchema);
@@ -80,14 +83,40 @@ app.post("/api/eventos", async (req, res) => {
 app.post("/api/eventos/:id/rsvp", async (req, res) => {
     try {
         const evento = await Evento.findById(req.params.id);
-        if (!evento) return res.status(404).json({ error: "No encontrado" });
-        if (!req.body.nombre) return res.status(400).json({ error: "Nombre requerido" });
+        if (!evento) return res.status(404).json({ error: "Evento no encontrado" });
 
-        evento.asistentes.push(req.body.nombre);
+        const nombreInvitado = req.body.nombre.trim();
+        if (!nombreInvitado) return res.status(400).json({ error: "El nombre es requerido" });
+
+        // 🛑 REGLA 1: Evitar que una misma persona confirme dos veces
+        const yaConfirmado = evento.asistentes.some(a => a.toLowerCase() === nombreInvitado.toLowerCase());
+        if (yaConfirmado) {
+            return res.status(400).json({ error: "Este nombre ya ha confirmado su asistencia previamente." });
+        }
+
+        // 🛑 REGLA 2: Límite de capacidad
+        if (evento.limiteAsistentes && evento.asistentes.length >= evento.limiteAsistentes) {
+            return res.status(403).json({ error: "El evento ya ha alcanzado su límite máximo de invitados." });
+        }
+
+        // 🛑 REGLA 3: Lista VIP estricta
+        if (evento.listaInvitados && evento.listaInvitados.length > 0) {
+            const estaEnLista = evento.listaInvitados.some(invitado => 
+                invitado.trim().toLowerCase() === nombreInvitado.toLowerCase()
+            );
+            if (!estaEnLista) {
+                return res.status(403).json({ error: "Lo sentimos, tu nombre no aparece en la lista privada de invitados." });
+            }
+        }
+
+        // Si pasa todas las reglas, lo guardamos
+        evento.asistentes.push(nombreInvitado);
         await evento.save();
-        res.json({ ok: true });
+
+        res.json({ ok: true, mensaje: "Asistencia confirmada" });
     } catch (error) {
-        res.status(500).json({ error: "Error confirmando" });
+        console.error("Error en RSVP:", error);
+        res.status(500).json({ error: "Error interno al confirmar asistencia" });
     }
 });
 

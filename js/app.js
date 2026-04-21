@@ -16,6 +16,34 @@ async function crearEvento() {
     btnCrear.innerText = "Procesando...";
     mensajeServidor.style.display = "block"; 
 
+    // ... dentro de la función crearEvento(), justo antes del 'try' ...
+
+    // 🟢 Extraemos y procesamos la lista VIP
+    const limiteInput = document.getElementById("limite").value;
+    const listaVipInput = document.getElementById("lista-vip").value;
+    
+    // Convertimos el texto del textarea en un arreglo (array), separando por saltos de línea
+    const arregloInvitados = listaVipInput
+        .split('\n')
+        .map(nombre => nombre.trim())
+        .filter(nombre => nombre !== ""); // Quitamos líneas vacías
+
+    try {
+        const imagenesUrls = await subirImagenes();
+
+        const data = {
+            titulo: tituloInput.value.trim(),
+            fecha: fechaInput.value,
+            lugar: lugarInput.value.trim(),
+            tipo: document.getElementById("tipo").value,
+            imagenes: imagenesUrls,
+            // 🟢 Mandamos los nuevos datos al backend
+            limiteAsistentes: limiteInput ? parseInt(limiteInput) : null,
+            listaInvitados: arregloInvitados
+        };
+
+        // ... (El resto del código fetch hacia el backend se queda igual) ...
+
     try {
         // 👇 Subir arreglo de imágenes
         const imagenesUrls = await subirImagenes();

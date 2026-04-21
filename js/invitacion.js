@@ -111,13 +111,21 @@ async function confirmar() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ nombre })
         });
-        if (!res.ok) throw new Error("Fallo en servidor");
+        
+        // 🟢 NUEVO: Extraemos la respuesta del servidor (sea éxito o error)
+        const data = await res.json();
 
-        alert("¡Asistencia confirmada!");
+        if (!res.ok) {
+            // Lanzamos el error específico que nos manda el backend
+            throw new Error(data.error || "Fallo en servidor");
+        }
+
+        alert("¡Asistencia confirmada con éxito!");
         inputNombre.value = ""; 
 
     } catch (error) {
-        alert("No se pudo confirmar tu asistencia. Intenta de nuevo.");
+        // 🟢 Mostrará "El evento está lleno" o "No estás en la lista"
+        alert(error.message);
     }
 }
 
