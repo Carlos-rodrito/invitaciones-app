@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel del Cliente - Seguimiento</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/panel.css">
+    <style>
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .dashboard-header h1 { margin-bottom: 5px; color: #222; }
+        .dashboard-header p { color: #666; font-size: 14px; margin-top: 0; }
+
+        /* Tarjetas de Estadísticas */
+        .stats-grid {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-box {
+            flex: 1;
+            background: #fdfdfd;
+            padding: 20px 15px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #eee;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        .stat-num {
+            font-size: 28px;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .num-verde { color: #4CAF50; }
+        .num-gris { color: #888; }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Lista de invitados */
+        .asistentes-list {
+            list-style: none;
+            padding: 0;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .asistentes-list li {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .asistentes-list li:last-child { border-bottom: none; }
+
+        /* Botones de acción del cliente */
+        .acciones-cliente {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" style="max-width: 600px;">
+    
+    <div id="pantalla-carga" style="text-align: center; padding: 40px 0;">
+        <h2>⏳ Conectando con tu evento...</h2>
+    </div>
+
+    <div id="mensaje-error" style="display: none; text-align: center; padding: 40px 0;">
+        <h2 style="color: red;">Acceso Denegado</h2>
+        <p>Este enlace es inválido o el evento ya no existe.</p>
+        <p style="font-size: 12px; color: #888;">Contacta al administrador si crees que es un error.</p>
+    </div>
+
+    <div id="panel-cliente" style="display: none;">
+        <div class="dashboard-header">
+            <h1 id="titulo-evento">Cargando...</h1>
+            <p id="detalles-fecha-lugar"></p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <span class="stat-num num-verde" id="stat-confirmados">0</span>
+                <span class="stat-label">Confirmados</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-num num-gris" id="stat-limite">-</span>
+                <span class="stat-label">Capacidad Máx.</span>
+            </div>
+        </div>
+
+        <h3 style="margin-bottom: 10px;">Lista de Confirmados</h3>
+        <ul id="lista-clientes" class="asistentes-list"></ul>
+
+        <div class="acciones-cliente">
+            <button onclick="exportarClienteCSV()" style="background: #222;">Descargar Excel (.csv)</button>
+            <button onclick="exportarClientePDF()" style="background: #d32f2f;">Descargar PDF</button>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="js/cliente.js"></script>
+</body>
+</html>
