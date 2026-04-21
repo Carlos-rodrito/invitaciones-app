@@ -98,13 +98,20 @@ async function subirImagenes() {
             body: formData
         });
 
-        if (!res.ok) throw new Error("Fallo Cloudinary");
+        // 🟢 NUEVO: Extraemos la respuesta exacta del servidor
         const data = await res.json();
+
+        if (!res.ok) {
+            // Lanzamos el error detallado que configuramos en server.js
+            throw new Error(data.detalle || data.error || "Error al conectar con Cloudinary");
+        }
+        
         return data.urls;
 
     } catch (error) {
         console.error("Error subiendo la imagen:", error);
-        alert("No se pudieron subir las imágenes, pero el evento se creará de todos modos.");
+        // 🟢 NUEVO: Mostramos el error real en la pantalla
+        alert("Fallo en las imágenes: " + error.message + "\n\n(El evento se creará de todos modos sin fotos).");
         return []; 
     }
 }
