@@ -98,11 +98,15 @@ async function subirImagenes() {
             body: formData
         });
 
-        // 🟢 NUEVO: Extraemos la respuesta exacta del servidor
+        // 🟢 EL ANTÍDOTO: Revisamos si Render nos devolvió un HTML en lugar de JSON
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("text/html")) {
+            throw new Error(`Render bloqueó la petición (Código ${res.status}). Probablemente la imagen es demasiado pesada para el servidor gratuito.`);
+        }
+
         const data = await res.json();
 
         if (!res.ok) {
-            // Lanzamos el error detallado que configuramos en server.js
             throw new Error(data.detalle || data.error || "Error al conectar con Cloudinary");
         }
         
@@ -110,8 +114,7 @@ async function subirImagenes() {
 
     } catch (error) {
         console.error("Error subiendo la imagen:", error);
-        // 🟢 NUEVO: Mostramos el error real en la pantalla
-        alert("Fallo en las imágenes: " + error.message + "\n\n(El evento se creará de todos modos sin fotos).");
+        alert("Fallo en las imágenes:\n" + error.message + "\n\n(El evento se creará de todos modos sin fotos).");
         return []; 
     }
 }
