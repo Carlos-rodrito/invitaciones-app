@@ -4,26 +4,28 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
-const fs = require("fs"); 
-const crypto = require("crypto"); // 🟢 Añadido para generar tokens de clientes
+const fs = require("fs"); // 🟢 Solo declarado una vez
+const crypto = require("crypto"); 
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
+// Configuración de Cloudinary
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.API_KEY,
     api_secret: process.env.API_SECRET
 });
 
-// 🟢 SOLUCIÓN IMÁGENES: Crear la carpeta si no existe en Render
+// Crear carpeta temporal si no existe en Render
 if (!fs.existsSync("uploads")) {
     fs.mkdirSync("uploads");
 }
 const upload = multer({ dest: "uploads/" });
 
+// Conexión a MongoDB
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("🟢 MongoDB conectado exitosamente"))
     .catch(err => console.error("🔴 Error conectando a MongoDB:", err));
@@ -36,11 +38,11 @@ const EventoSchema = new mongoose.Schema({
     fecha: String,
     lugar: String,
     tipo: String,
-    imagenes: [String],
+    imagenes: [String], // Arreglo para el carrusel
     asistentes: [String],
     limiteAsistentes: Number, 
     listaInvitados: [String],
-    tokenCliente: String // 🟢 Añadido para compartir solo lectura con el dueño del evento
+    tokenCliente: String 
 });
 
 const Evento = mongoose.model("Evento", EventoSchema);
@@ -72,7 +74,7 @@ app.get("/api/eventos/:id", async (req, res) => {
     }
 });
 
-// 🟢 NUEVA RUTA: Para el panel de solo lectura del cliente
+// Ruta para el panel del cliente
 app.get("/api/eventos/compartido/:token", async (req, res) => {
     try {
         const evento = await Evento.findOne({ tokenCliente: req.params.token });
@@ -93,7 +95,6 @@ app.get("/api/eventos/compartido/:token", async (req, res) => {
 
 app.post("/api/eventos", async (req, res) => {
     try {
-        // Generamos un token aleatorio seguro para el cliente
         const tokenGenerado = crypto.randomBytes(8).toString('hex');
 
         const evento = new Evento({
@@ -116,28 +117,24 @@ app.post("/api/eventos/:id/rsvp", async (req, res) => {
         const nombreInvitado = req.body.nombre.trim();
         if (!nombreInvitado) return res.status(400).json({ error: "El nombre es requerido" });
 
-        // 🛑 REGLA 1: Evitar que una misma persona confirme dos veces
         const yaConfirmado = evento.asistentes.some(a => a.toLowerCase() === nombreInvitado.toLowerCase());
         if (yaConfirmado) {
-            return res.status(400).json({ error: "Este nombre ya ha confirmado su asistencia previamente." });
+            return res.status(400).json({ error: "Este nombre ya ha confirmado su asistencia." });
         }
 
-        // 🛑 REGLA 2: Límite de capacidad
         if (evento.limiteAsistentes && evento.asistentes.length >= evento.limiteAsistentes) {
-            return res.status(403).json({ error: "El evento ya ha alcanzado su límite máximo de invitados." });
+            return res.status(403).json({ error: "El evento ya ha alcanzado su límite de capacidad." });
         }
 
-        // 🛑 REGLA 3: Lista VIP estricta
         if (evento.listaInvitados && evento.listaInvitados.length > 0) {
             const estaEnLista = evento.listaInvitados.some(invitado => 
                 invitado.trim().toLowerCase() === nombreInvitado.toLowerCase()
             );
             if (!estaEnLista) {
-                return res.status(403).json({ error: "Lo sentimos, tu nombre no aparece en la lista privada de invitados." });
+                return res.status(403).json({ error: "Tu nombre no aparece en la lista privada." });
             }
         }
 
-        // Si pasa todas las reglas, lo guardamos
         evento.asistentes.push(nombreInvitado);
         await evento.save();
 
@@ -158,17 +155,20 @@ app.get("/api/eventos/:id/asistentes", async (req, res) => {
     }
 });
 
+// 🟢 Subida de múltiples imágenes
 app.post("/upload", upload.array("imagenes", 5), async (req, res) => {
     try {
         if (!req.files || req.files.length === 0) {
             return res.json({ urls: [] });
         }
         
-        // Subimos todas las imágenes a Cloudinary en paralelo
         const uploadPromises = req.files.map(file => {
             return cloudinary.uploader.upload(file.path).then(result => {
-                fs.unlinkSync(file.path); // Borramos el archivo temporal
+                fs.unlinkSync(file.path); 
                 return result.secure_url;
+            }).catch(cloudError => {
+                console.error("🔴 Error interno de Cloudinary:", cloudError);
+                throw cloudError; 
             });
         });
 
@@ -176,8 +176,11 @@ app.post("/upload", upload.array("imagenes", 5), async (req, res) => {
         res.json({ urls: urls }); 
 
     } catch (error) {
-        console.error("Error en /upload:", error);
-        res.status(500).json({ error: "Error subiendo imágenes a la nube" });
+        console.error("🔴 Error general en /upload:", error);
+        res.status(500).json({ 
+            error: "Error subiendo imágenes a la nube", 
+            detalle: error.message || JSON.stringify(error) 
+        });
     }
 });
 
