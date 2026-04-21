@@ -17,7 +17,17 @@ cloudinary.config({
     api_secret: process.env.API_SECRET
 });
 
+// ... (después de configurar cloudinary)
+
+const fs = require("fs"); 
+
+// 🟢 SOLUCIÓN IMÁGENES: Crear la carpeta si no existe
+if (!fs.existsSync("uploads")) {
+    fs.mkdirSync("uploads");
+}
 const upload = multer({ dest: "uploads/" });
+
+// ... (sigue la conexión a MongoDB)
 
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("🟢 MongoDB conectado exitosamente"))

@@ -1,6 +1,9 @@
 const API_URL = "https://invitaciones-backend.onrender.com";
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
+const invitadoVIP = params.get("invitado"); // 🟢 NUEVO: Extraemos el nombre del enlace
+
+// ... (código del temporizador y cargar evento)
 
 let intervaloContador; 
 let imagenActual = 0; // Controla qué imagen se está viendo
@@ -42,6 +45,12 @@ async function cargarEvento() {
                 document.querySelector(".prev").style.display = "none";
                 document.querySelector(".next").style.display = "none";
             }
+        }
+        if (invitadoVIP) {
+            document.getElementById("area-ingreso").style.display = "none"; // Ocultamos el input
+            const saludo = document.getElementById("saludo-vip");
+            saludo.style.display = "block"; // Mostramos el saludo
+            saludo.innerText = `¡Hola, ${invitadoVIP}!`;
         }
 
         if (evento.tipo) document.body.className = evento.tipo;
@@ -98,10 +107,11 @@ function iniciarContador(fecha) {
 async function confirmar() {
     const inputNombre = document.getElementById("nombre");
     const nombre = inputNombre.value.trim(); 
+const nombre = invitadoVIP ? invitadoVIP : document.getElementById("nombre").value.trim(); 
 
     if (!nombre) {
         alert("Ingresa tu nombre antes de confirmar asistencia.");
-        inputNombre.focus(); 
+        document.getElementById("nombre").focus(); 
         return;
     }
 
@@ -112,20 +122,14 @@ async function confirmar() {
             body: JSON.stringify({ nombre })
         });
         
-        // 🟢 NUEVO: Extraemos la respuesta del servidor (sea éxito o error)
         const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Fallo en servidor");
 
-        if (!res.ok) {
-            // Lanzamos el error específico que nos manda el backend
-            throw new Error(data.error || "Fallo en servidor");
-        }
-
-        alert("¡Asistencia confirmada con éxito!");
-        inputNombre.value = ""; 
+        alert("¡Asistencia confirmada!");
+        if (!invitadoVIP) document.getElementById("nombre").value = ""; 
 
     } catch (error) {
-        // 🟢 Mostrará "El evento está lleno" o "No estás en la lista"
-        alert(error.message);
+        alert(error.message); // Muestra "El evento está lleno" o "No estás en la lista"
     }
 }
 
