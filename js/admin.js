@@ -82,31 +82,71 @@ async function verDetalles(id, titulo) {
     document.getElementById("detalles-evento").style.display = "block";
     document.getElementById("evento-titulo-detalle").innerText = `Detalles: ${titulo}`;
     
-    // 1. Generar QR
     generarQR(id);
 
-    // 2. Cargar Asistentes
     try {
-        const res = await fetch(`${API_URL}/api/eventos/${id}/asistentes`);
-        const asistentes = await res.json();
+        // 1. Obtener los detalles completos del evento (para saber si hay lista VIP)
+        const resEvento = await fetch(`${API_URL}/api/eventos/${id}`);
+        const evento = await resEvento.json();
+
+        // 2. Obtener quiénes ya confirmaron
+        const resAsistentes = await fetch(`${API_URL}/api/eventos/${id}/asistentes`);
+        const asistentes = await resAsistentes.json();
         asistentesGlobal = asistentes;
 
         document.getElementById("total").innerText = asistentes.length;
-
         const lista = document.getElementById("lista");
         lista.innerHTML = "";
 
+        // 🟢 RENDERIZAR LISTA VIP CON ENLACES ÚNICOS
+        if (evento.listaInvitados && evento.listaInvitados.length > 0) {
+            lista.innerHTML = `<li style="background: #eef8f1; padding: 10px; font-weight: bold; border-radius: 5px;">👑 Enlaces VIP Personalizados:</li>`;
+            
+            evento.listaInvitados.forEach(invitado => {
+                const yaConfirmo = asistentes.some(a => a.toLowerCase() === invitado.toLowerCase());
+                const li = document.createElement("li");
+                li.style.display = "flex";
+                li.style.justifyContent = "space-between";
+                li.style.alignItems = "center";
+                
+                // Creamos el enlace único para esta persona
+                const rutaBase = window.location.pathname.replace("admin.html", "");
+                const base = window.location.origin + rutaBase;
+                const linkVip = `${base}invitacion.html?id=${id}&invitado=${encodeURIComponent(invitado)}`;
+                
+                const mensajeWa = `¡Hola *${invitado}*! 🎉\nEstás invitado a *${titulo}*.\n\nEste es tu pase personal e intransferible. Confirma tu asistencia aquí 👇\n${linkVip}`;
+                const urlWa = `https://wa.me/?text=${encodeURIComponent(mensajeWa)}`;
+
+                li.innerHTML = `
+                    <span>
+                        ${yaConfirmo ? "✅" : "⏳"} <strong>${invitado}</strong>
+                    </span>
+                    <button onclick="window.open('${urlWa}', '_blank')" style="background:#25D366; color:white; padding: 5px 10px; margin:0; font-size: 12px; width: auto;">
+                        Enviar Link
+                    </button>
+                `;
+                lista.appendChild(li);
+            });
+
+            lista.innerHTML += `<li style="margin-top:15px; font-weight: bold;">Asistentes extra (Si los hay):</li>`;
+        }
+
+        // 3. Renderizar Asistentes (que ya confirmaron)
         if (asistentes.length === 0) {
-            lista.innerHTML = "<li style='color:#888;'>Nadie ha confirmado aún.</li>";
+            lista.innerHTML += "<li style='color:#888;'>Nadie ha confirmado aún.</li>";
         } else {
             asistentes.forEach(nombre => {
-                const li = document.createElement("li");
-                li.innerText = `👤 ${nombre}`;
-                lista.appendChild(li);
+                // Solo lo mostramos si no es parte de la lista VIP (para no duplicarlo visualmente)
+                const esVip = evento.listaInvitados && evento.listaInvitados.some(v => v.toLowerCase() === nombre.toLowerCase());
+                if (!esVip) {
+                    const li = document.createElement("li");
+                    li.innerText = `👤 ${nombre}`;
+                    lista.appendChild(li);
+                }
             });
         }
     } catch (error) {
-        console.error("Error cargando asistentes", error);
+        console.error("Error cargando detalles", error);
     }
 }
 
