@@ -112,3 +112,61 @@ body.corporativo { background: #e0eafc; } /* Ligeramente ajustado para verse má
     from { opacity: 0; transform: translateY(20px);}
     to { opacity: 1; transform: translateY(0);}
 }
+
+/* =========================================
+   CARRUSEL DE IMÁGENES
+========================================= */
+.carrusel-contenedor {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 20px;
+    border-radius: 15px;
+    overflow: hidden; /* Evita que las imágenes se salgan de los bordes redondeados */
+}
+
+.carrusel-imagenes {
+    display: flex;
+    justify-content: center;
+    background: #f8f8f8; /* Fondo suave mientras carga */
+}
+
+.img-evento.slide {
+    width: 100%;
+    height: 300px; /* Altura fija para que la tarjeta no brinque */
+    object-fit: cover; /* Recorta la imagen elegante sin deformarla */
+    border-radius: 15px;
+    animation: fadeIn 0.4s; /* Transición suave al cambiar foto */
+}
+
+/* Botones sobre la imagen */
+.btn-carrusel {
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: auto;
+    padding: 10px 15px;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    transition: 0.3s ease;
+    border-radius: 0 5px 5px 0;
+    user-select: none;
+    background-color: rgba(0,0,0,0.4);
+    border: none;
+    margin: 0;
+    z-index: 10;
+}
+
+.btn-carrusel:hover {
+    background-color: rgba(0,0,0,0.8);
+}
+
+.next {
+    right: 0;
+    border-radius: 5px 0 0 5px;
+}
+.prev {
+    left: 0;
+}

@@ -125,3 +125,34 @@ button:disabled {
     from { opacity: 0; transform: translateY(10px);}
     to { opacity: 1; transform: translateY(0);}
 }
+
+/* =========================================
+   DISEÑO ADAPTATIVO (MÓVILES Y TABLETS)
+========================================= */
+@media screen and (max-width: 600px) {
+    body {
+        padding: 10px; /* Menos espacio inútil en los bordes del celular */
+    }
+
+    .container {
+        padding: 25px 20px; /* Reducimos el espacio interno de la tarjeta */
+        border-radius: 12px;
+    }
+
+    h1 {
+        font-size: 22px;
+        margin-bottom: 20px;
+    }
+
+    /* Regla de oro para iOS (iPhone): 
+       Si el tamaño de fuente es menor a 16px, Safari hace un zoom molesto al tocar el input. */
+    input, select {
+        font-size: 16px; 
+        padding: 10px;
+    }
+
+    button {
+        font-size: 16px;
+        padding: 12px;
+    }
+}
