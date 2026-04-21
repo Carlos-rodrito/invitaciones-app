@@ -6,6 +6,26 @@ const invitadoVIP = params.get("invitado");
 let intervaloContador; 
 let imagenActual = 0; 
 
+// 🟢 NUEVA FUNCIÓN: Traductor de fechas
+function formatearFecha(fechaIso) {
+    if (!fechaIso) return "Fecha por definir";
+    
+    // Creamos un objeto Date con el texto del formulario
+    const fecha = new Date(fechaIso);
+    
+    // Si la fecha es inválida, devolvemos el texto original
+    if (isNaN(fecha.getTime())) return fechaIso;
+
+    // Extraemos las partes en español
+    const opcionesFecha = { day: 'numeric', month: 'long', year: 'numeric' };
+    const opcionesHora = { hour: '2-digit', minute: '2-digit' };
+    
+    const fechaTexto = fecha.toLocaleDateString('es-ES', opcionesFecha);
+    const horaTexto = fecha.toLocaleTimeString('es-ES', opcionesHora);
+    
+    return `${fechaTexto} a las ${horaTexto} hrs`;
+}
+
 async function cargarEvento() {
     if (!id) {
         document.body.innerHTML = "<h1 style='text-align:center; padding: 50px;'>Error: Evento no encontrado</h1>";
@@ -19,7 +39,10 @@ async function cargarEvento() {
         const evento = await res.json();
 
         document.getElementById("titulo").innerText = evento.titulo || "Evento";
-        document.getElementById("fecha").innerText = evento.fecha || "";
+        
+        // 🟢 APLICAMOS EL TRADUCTOR A LA FECHA
+        document.getElementById("fecha").innerText = formatearFecha(evento.fecha);
+        
         document.getElementById("lugar").innerText = evento.lugar || "";
 
         if (evento.imagenes && evento.imagenes.length > 0) {
@@ -97,7 +120,6 @@ function iniciarContador(fecha) {
 
 async function confirmar() {
     const inputNombre = document.getElementById("nombre");
-    // 🟢 Corrección: Solo declaramos 'nombre' una vez y evaluamos de dónde viene
     const nombre = invitadoVIP ? invitadoVIP : inputNombre.value.trim(); 
 
     if (!nombre) {

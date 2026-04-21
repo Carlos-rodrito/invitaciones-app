@@ -156,8 +156,10 @@ app.get("/api/eventos/:id/asistentes", async (req, res) => {
 });
 
 // 🟢 Subida de múltiples imágenes
-app.post("/upload", upload.array("imagenes", 5), async (req, res) => {
+// 🟢 Subida de múltiples imágenes (A prueba de balas con upload.any)
+app.post("/upload", upload.any(), async (req, res) => {
     try {
+        // upload.any() acepta los archivos sin importar si el frontend dice "imagen" o "imagenes"
         if (!req.files || req.files.length === 0) {
             return res.json({ urls: [] });
         }
