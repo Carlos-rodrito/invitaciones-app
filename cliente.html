@@ -25,7 +25,7 @@
         .stat-box {
             flex: 1;
             background: #fdfdfd;
-            padding: 20px 15px;
+            padding: 20px 10px;
             border-radius: 12px;
             text-align: center;
             border: 1px solid #eee;
@@ -33,20 +33,22 @@
         }
 
         .stat-num {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 600;
             display: block;
             margin-bottom: 5px;
         }
 
         .num-verde { color: #4CAF50; }
+        .num-azul { color: #2196F3; } /* 🟢 Nuevo color para los disponibles */
         .num-gris { color: #888; }
 
         .stat-label {
-            font-size: 12px;
+            font-size: 11px;
             color: #666;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            font-weight: bold;
         }
 
         /* Lista de invitados */
@@ -105,8 +107,12 @@
                 <span class="stat-label">Confirmados</span>
             </div>
             <div class="stat-box">
+                <span class="stat-num num-azul" id="stat-disponibles">-</span>
+                <span class="stat-label">Disponibles</span>
+            </div>
+            <div class="stat-box">
                 <span class="stat-num num-gris" id="stat-limite">-</span>
-                <span class="stat-label">Capacidad Máx.</span>
+                <span class="stat-label">Límite Total</span>
             </div>
         </div>
 

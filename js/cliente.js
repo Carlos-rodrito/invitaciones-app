@@ -7,14 +7,12 @@ let asistentesDelCliente = [];
 let tituloDelEvento = "Reporte_Evento";
 
 async function cargarDatosCliente() {
-    // 1. Si no hay token en la URL, mostrar error inmediato
     if (!token) {
         mostrarError();
         return;
     }
 
     try {
-        // 2. Pedirle los datos al servidor usando el token
         const res = await fetch(`${API_URL}/api/eventos/compartido/${token}`);
         
         if (!res.ok) {
@@ -23,14 +21,12 @@ async function cargarDatosCliente() {
 
         const evento = await res.json();
         
-        // 3. Guardar datos para exportación
         asistentesDelCliente = evento.asistentes;
         tituloDelEvento = evento.titulo;
 
-        // 4. Llenar la interfaz con los datos
         document.getElementById("titulo-evento").innerText = evento.titulo;
         
-        // Formatear la fecha bonito (igual que en invitacion.js)
+        // Formatear la fecha
         let fechaTexto = "Fecha sin definir";
         if (evento.fecha) {
             const dateObj = new Date(evento.fecha);
@@ -41,9 +37,27 @@ async function cargarDatosCliente() {
         
         document.getElementById("detalles-fecha-lugar").innerText = `📅 ${fechaTexto} | 📍 ${evento.lugar || 'Lugar por confirmar'}`;
 
-        // Llenar estadísticas
-        document.getElementById("stat-confirmados").innerText = evento.asistentes.length;
-        document.getElementById("stat-limite").innerText = evento.limiteAsistentes || "Ilimitado";
+        // 🟢 NUEVA LÓGICA DE CÁLCULO DE CUPOS
+        const totalConfirmados = evento.asistentes.length;
+        document.getElementById("stat-confirmados").innerText = totalConfirmados;
+
+        if (evento.limiteAsistentes && evento.limiteAsistentes > 0) {
+            document.getElementById("stat-limite").innerText = evento.limiteAsistentes;
+            
+            // Calculamos cuántos quedan (evitando que de números negativos si el admin sobrevendió)
+            const cuposRestantes = evento.limiteAsistentes - totalConfirmados;
+            document.getElementById("stat-disponibles").innerText = cuposRestantes > 0 ? cuposRestantes : 0;
+            
+            // Si ya se llenó, lo ponemos en rojo
+            if (cuposRestantes <= 0) {
+                document.getElementById("stat-disponibles").style.color = "red";
+            }
+        } else {
+            // Si el admin dejó el campo vacío al crear el evento
+            document.getElementById("stat-limite").innerText = "∞";
+            document.getElementById("stat-disponibles").innerText = "Ilimitado";
+            document.getElementById("stat-disponibles").style.fontSize = "18px"; // Ajuste visual
+        }
 
         // Llenar la lista de confirmados
         const lista = document.getElementById("lista-clientes");
@@ -54,12 +68,18 @@ async function cargarDatosCliente() {
         } else {
             evento.asistentes.forEach(nombre => {
                 const li = document.createElement("li");
-                li.innerHTML = `✅ <strong>${nombre}</strong>`;
+                
+                // Si es un acompañante, lo mostramos un poco más pequeño para diferenciar
+                if (nombre.includes("(Acompañante")) {
+                    li.innerHTML = `<span style="color:#888;">↳</span> <span style="font-size: 13px; color: #555;">${nombre}</span>`;
+                } else {
+                    li.innerHTML = `✅ <strong>${nombre}</strong>`;
+                }
+                
                 lista.appendChild(li);
             });
         }
 
-        // 5. Ocultar pantalla de carga y mostrar el panel
         document.getElementById("pantalla-carga").style.display = "none";
         document.getElementById("panel-cliente").style.display = "block";
 
@@ -121,5 +141,4 @@ function exportarClientePDF() {
     doc.save(`Confirmados_${tituloDelEvento.replace(/\s+/g, '_')}.pdf`);
 }
 
-// Iniciar la carga al abrir la página
 cargarDatosCliente();
