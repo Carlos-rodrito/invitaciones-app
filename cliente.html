@@ -118,6 +118,11 @@
 
         <h3 style="margin-bottom: 10px;">Lista de Confirmados</h3>
         <ul id="lista-clientes" class="asistentes-list"></ul>
+        <div id="seccion-pendientes" style="display: none; margin-top: 30px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 8px; padding: 15px;">
+            <h3 style="color: #856404; margin-top: 0;">⏳ Solicitudes de Asistencia</h3>
+            <p style="font-size: 12px; color: #856404; margin-top: -10px;">Estas personas no estaban en tu lista VIP. Aprueba o rechaza su ingreso.</p>
+            <ul id="lista-pendientes" class="asistentes-list" style="background: white;"></ul>
+        </div>
 
         <div class="acciones-cliente">
             <button onclick="exportarClienteCSV()" style="background: #222;">Descargar Excel (.csv)</button>

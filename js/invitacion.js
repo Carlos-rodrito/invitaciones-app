@@ -122,6 +122,8 @@ function agregarAcompanante() {
 }
 
 // 🟢 MODIFICADA: Enviar titular + acompañantes
+// ... (arriba queda igual)
+
 async function confirmar(event) {
     const inputNombre = document.getElementById("nombre");
     const nombrePrincipal = invitadoVIP ? invitadoVIP : inputNombre.value.trim(); 
@@ -132,63 +134,56 @@ async function confirmar(event) {
         return;
     }
 
-    // Recolectar todos los nombres de los acompañantes
     const inputsAcompanantes = document.querySelectorAll(".input-acompanante");
     const acompanantesExtra = [];
-    
     inputsAcompanantes.forEach(input => {
-        if (input.value.trim() !== "") {
-            acompanantesExtra.push(input.value.trim());
-        }
+        if (input.value.trim() !== "") acompanantesExtra.push(input.value.trim());
     });
 
     try {
         const res = await fetch(`${API_URL}/api/eventos/${id}/rsvp`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            // 🟢 Enviamos la nueva estructura de datos al servidor
-            body: JSON.stringify({ 
-                nombrePrincipal: nombrePrincipal, 
-                acompanantes: acompanantesExtra 
-            })
+            body: JSON.stringify({ nombrePrincipal: nombrePrincipal, acompanantes: acompanantesExtra })
         });
         
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Fallo en servidor");
 
-        // 🟢 MEJORA VISUAL: Desaparecer formulario y mostrar mensaje de éxito
-        
-        // 1. Ocultar inputs del titular
-        if (invitadoVIP) {
-            document.getElementById("saludo-vip").style.display = "none";
-        } else {
-            document.getElementById("area-ingreso").style.display = "none";
-        }
+        // Ocultar formulario
+        if (invitadoVIP) document.getElementById("saludo-vip").style.display = "none";
+        else document.getElementById("area-ingreso").style.display = "none";
 
-        // 2. Ocultar zona de acompañantes y botones
         document.getElementById("contenedor-acompanantes").style.display = "none";
         document.getElementById("btn-add-acompanante").style.display = "none";
         
-        if (event && event.target) {
-            event.target.style.display = "none"; // Oculta el botón de Confirmar
-        } else {
-            document.getElementById("btn-confirmar").style.display = "none";
-        }
+        if (event && event.target) event.target.style.display = "none";
+        else document.getElementById("btn-confirmar").style.display = "none";
 
-        // 3. Imprimir el mensaje bonito
-        let textoAcompanantes = "";
-        if (acompanantesExtra.length > 0) {
-            textoAcompanantes = `<p style="color: #888; font-size: 13px; margin-top: 5px;">+ ${acompanantesExtra.length} acompañante(s) registrado(s)</p>`;
-        }
-
+        // 🟢 NUEVO: Decidir qué mensaje mostrar
         const mensajeExito = document.createElement("div");
         mensajeExito.style.textAlign = "center";
         mensajeExito.style.marginTop = "20px";
-        mensajeExito.innerHTML = `
-            <h2 style="color: #4CAF50; margin-bottom: 5px;">¡Asistencia Confirmada! 🎉</h2>
-            <p style="color: #444; font-size: 15px;">Te esperamos en el evento, <strong>${nombrePrincipal}</strong>.</p>
-            ${textoAcompanantes}
-        `;
+
+        if (data.waitlist) {
+            // Mensaje de Lista de Espera
+            mensajeExito.innerHTML = `
+                <h2 style="color: #FF9800; margin-bottom: 5px;">¡Solicitud Enviada! ⏳</h2>
+                <p style="color: #444; font-size: 15px;">Gracias <strong>${nombrePrincipal}</strong>. Al ser un evento de lista privada, tu solicitud ha sido enviada al organizador para su aprobación.</p>
+                <p style="color: #888; font-size: 13px;">Te notificaremos si se abren cupos.</p>
+            `;
+        } else {
+            // Mensaje de Éxito Normal
+            let textoAcompanantes = "";
+            if (acompanantesExtra.length > 0) {
+                textoAcompanantes = `<p style="color: #888; font-size: 13px; margin-top: 5px;">+ ${acompanantesExtra.length} acompañante(s) registrado(s)</p>`;
+            }
+            mensajeExito.innerHTML = `
+                <h2 style="color: #4CAF50; margin-bottom: 5px;">¡Asistencia Confirmada! 🎉</h2>
+                <p style="color: #444; font-size: 15px;">Te esperamos en el evento, <strong>${nombrePrincipal}</strong>.</p>
+                ${textoAcompanantes}
+            `;
+        }
         
         document.querySelector(".card").appendChild(mensajeExito);
 
