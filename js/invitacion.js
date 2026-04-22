@@ -6,17 +6,12 @@ const invitadoVIP = params.get("invitado");
 let intervaloContador; 
 let imagenActual = 0; 
 
-// 🟢 NUEVA FUNCIÓN: Traductor de fechas
 function formatearFecha(fechaIso) {
     if (!fechaIso) return "Fecha por definir";
     
-    // Creamos un objeto Date con el texto del formulario
     const fecha = new Date(fechaIso);
-    
-    // Si la fecha es inválida, devolvemos el texto original
     if (isNaN(fecha.getTime())) return fechaIso;
 
-    // Extraemos las partes en español
     const opcionesFecha = { day: 'numeric', month: 'long', year: 'numeric' };
     const opcionesHora = { hour: '2-digit', minute: '2-digit' };
     
@@ -39,10 +34,7 @@ async function cargarEvento() {
         const evento = await res.json();
 
         document.getElementById("titulo").innerText = evento.titulo || "Evento";
-        
-        // 🟢 APLICAMOS EL TRADUCTOR A LA FECHA
         document.getElementById("fecha").innerText = formatearFecha(evento.fecha);
-        
         document.getElementById("lugar").innerText = evento.lugar || "";
 
         if (evento.imagenes && evento.imagenes.length > 0) {
@@ -118,28 +110,87 @@ function iniciarContador(fecha) {
     }, 1000);
 }
 
-async function confirmar() {
-    const inputNombre = document.getElementById("nombre");
-    const nombre = invitadoVIP ? invitadoVIP : inputNombre.value.trim(); 
+// 🟢 NUEVA FUNCIÓN: Agrega cajitas de texto para acompañantes
+function agregarAcompanante() {
+    const contenedor = document.getElementById("contenedor-acompanantes");
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "input-acompanante"; // Clase para identificarlos luego
+    input.placeholder = "Nombre del acompañante";
+    input.style.marginTop = "10px";
+    contenedor.appendChild(input);
+}
 
-    if (!nombre) {
+// 🟢 MODIFICADA: Enviar titular + acompañantes
+async function confirmar(event) {
+    const inputNombre = document.getElementById("nombre");
+    const nombrePrincipal = invitadoVIP ? invitadoVIP : inputNombre.value.trim(); 
+
+    if (!nombrePrincipal) {
         alert("Ingresa tu nombre antes de confirmar asistencia.");
         inputNombre.focus(); 
         return;
     }
 
+    // Recolectar todos los nombres de los acompañantes
+    const inputsAcompanantes = document.querySelectorAll(".input-acompanante");
+    const acompanantesExtra = [];
+    
+    inputsAcompanantes.forEach(input => {
+        if (input.value.trim() !== "") {
+            acompanantesExtra.push(input.value.trim());
+        }
+    });
+
     try {
         const res = await fetch(`${API_URL}/api/eventos/${id}/rsvp`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ nombre })
+            // 🟢 Enviamos la nueva estructura de datos al servidor
+            body: JSON.stringify({ 
+                nombrePrincipal: nombrePrincipal, 
+                acompanantes: acompanantesExtra 
+            })
         });
         
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Fallo en servidor");
 
-        alert("¡Asistencia confirmada!");
-        if (!invitadoVIP) inputNombre.value = ""; 
+        // 🟢 MEJORA VISUAL: Desaparecer formulario y mostrar mensaje de éxito
+        
+        // 1. Ocultar inputs del titular
+        if (invitadoVIP) {
+            document.getElementById("saludo-vip").style.display = "none";
+        } else {
+            document.getElementById("area-ingreso").style.display = "none";
+        }
+
+        // 2. Ocultar zona de acompañantes y botones
+        document.getElementById("contenedor-acompanantes").style.display = "none";
+        document.getElementById("btn-add-acompanante").style.display = "none";
+        
+        if (event && event.target) {
+            event.target.style.display = "none"; // Oculta el botón de Confirmar
+        } else {
+            document.getElementById("btn-confirmar").style.display = "none";
+        }
+
+        // 3. Imprimir el mensaje bonito
+        let textoAcompanantes = "";
+        if (acompanantesExtra.length > 0) {
+            textoAcompanantes = `<p style="color: #888; font-size: 13px; margin-top: 5px;">+ ${acompanantesExtra.length} acompañante(s) registrado(s)</p>`;
+        }
+
+        const mensajeExito = document.createElement("div");
+        mensajeExito.style.textAlign = "center";
+        mensajeExito.style.marginTop = "20px";
+        mensajeExito.innerHTML = `
+            <h2 style="color: #4CAF50; margin-bottom: 5px;">¡Asistencia Confirmada! 🎉</h2>
+            <p style="color: #444; font-size: 15px;">Te esperamos en el evento, <strong>${nombrePrincipal}</strong>.</p>
+            ${textoAcompanantes}
+        `;
+        
+        document.querySelector(".card").appendChild(mensajeExito);
 
     } catch (error) {
         alert(error.message); 

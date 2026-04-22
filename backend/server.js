@@ -4,7 +4,7 @@ const cors = require("cors");
 const mongoose = require("mongoose");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
-const fs = require("fs"); // 🟢 Solo declarado una vez
+const fs = require("fs"); 
 const crypto = require("crypto"); 
 
 const app = express();
@@ -19,7 +19,6 @@ cloudinary.config({
     api_secret: process.env.API_SECRET
 });
 
-// Crear carpeta temporal si no existe en Render
 if (!fs.existsSync("uploads")) {
     fs.mkdirSync("uploads");
 }
@@ -38,7 +37,7 @@ const EventoSchema = new mongoose.Schema({
     fecha: String,
     lugar: String,
     tipo: String,
-    imagenes: [String], // Arreglo para el carrusel
+    imagenes: [String], 
     asistentes: [String],
     limiteAsistentes: Number, 
     listaInvitados: [String],
@@ -74,7 +73,6 @@ app.get("/api/eventos/:id", async (req, res) => {
     }
 });
 
-// Ruta para el panel del cliente
 app.get("/api/eventos/compartido/:token", async (req, res) => {
     try {
         const evento = await Evento.findOne({ tokenCliente: req.params.token });
@@ -109,33 +107,52 @@ app.post("/api/eventos", async (req, res) => {
     }
 });
 
+// 🟢 RUTA RSVP ACTUALIZADA PARA SOPORTAR ACOMPAÑANTES
 app.post("/api/eventos/:id/rsvp", async (req, res) => {
     try {
         const evento = await Evento.findById(req.params.id);
         if (!evento) return res.status(404).json({ error: "Evento no encontrado" });
 
-        const nombreInvitado = req.body.nombre.trim();
-        if (!nombreInvitado) return res.status(400).json({ error: "El nombre es requerido" });
+        // Ahora recibimos al titular y un arreglo de sus acompañantes
+        const nombrePrincipal = req.body.nombrePrincipal ? req.body.nombrePrincipal.trim() : "";
+        const acompanantes = req.body.acompanantes || []; 
 
-        const yaConfirmado = evento.asistentes.some(a => a.toLowerCase() === nombreInvitado.toLowerCase());
+        if (!nombrePrincipal) return res.status(400).json({ error: "El nombre principal es requerido" });
+
+        // 🛑 REGLA 1: Evitar que el titular confirme dos veces
+        const yaConfirmado = evento.asistentes.some(a => a.toLowerCase() === nombrePrincipal.toLowerCase());
         if (yaConfirmado) {
-            return res.status(400).json({ error: "Este nombre ya ha confirmado su asistencia." });
+            return res.status(400).json({ error: "Este invitado ya ha confirmado su asistencia previamente." });
         }
 
-        if (evento.limiteAsistentes && evento.asistentes.length >= evento.limiteAsistentes) {
-            return res.status(403).json({ error: "El evento ya ha alcanzado su límite de capacidad." });
+        // 🛑 REGLA 2: Límite de capacidad (Titular + Acompañantes)
+        const totalNuevosAsistentes = 1 + acompanantes.length; 
+        if (evento.limiteAsistentes && (evento.asistentes.length + totalNuevosAsistentes) > evento.limiteAsistentes) {
+            const cuposRestantes = evento.limiteAsistentes - evento.asistentes.length;
+            return res.status(403).json({ error: `El evento está lleno o no tiene suficientes lugares. Solo quedan ${cuposRestantes} cupos disponibles.` });
         }
 
+        // 🛑 REGLA 3: Lista VIP (Solo validamos al Titular)
         if (evento.listaInvitados && evento.listaInvitados.length > 0) {
             const estaEnLista = evento.listaInvitados.some(invitado => 
-                invitado.trim().toLowerCase() === nombreInvitado.toLowerCase()
+                invitado.trim().toLowerCase() === nombrePrincipal.toLowerCase()
             );
             if (!estaEnLista) {
-                return res.status(403).json({ error: "Tu nombre no aparece en la lista privada." });
+                return res.status(403).json({ error: "Lo sentimos, tu nombre no aparece en la lista privada de invitados." });
             }
         }
 
-        evento.asistentes.push(nombreInvitado);
+        // 🟢 ÉXITO: Guardamos a todos en la base de datos
+        // 1. Guardamos al titular
+        evento.asistentes.push(nombrePrincipal);
+        
+        // 2. Guardamos a los acompañantes con una etiqueta
+        acompanantes.forEach(nombreExtra => {
+            if (nombreExtra.trim()) {
+                evento.asistentes.push(`${nombreExtra.trim()} (Acompañante de ${nombrePrincipal})`);
+            }
+        });
+
         await evento.save();
 
         res.json({ ok: true, mensaje: "Asistencia confirmada" });
@@ -155,11 +172,8 @@ app.get("/api/eventos/:id/asistentes", async (req, res) => {
     }
 });
 
-// 🟢 Subida de múltiples imágenes
-// 🟢 Subida de múltiples imágenes (A prueba de balas con upload.any)
 app.post("/upload", upload.any(), async (req, res) => {
     try {
-        // upload.any() acepta los archivos sin importar si el frontend dice "imagen" o "imagenes"
         if (!req.files || req.files.length === 0) {
             return res.json({ urls: [] });
         }
