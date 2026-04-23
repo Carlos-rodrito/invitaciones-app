@@ -6,7 +6,6 @@ const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const fs = require("fs"); 
 const crypto = require("crypto"); 
-// 🟢 NUEVAS LIBRERÍAS DE SEGURIDAD
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -30,17 +29,17 @@ mongoose.connect(process.env.MONGO_URI)
     .catch(err => console.error("🔴 Error conectando a MongoDB:", err));
 
 // ==========================================
-// 1. MODELO DE USUARIO (NUEVO)
+// 1. MODELO DE USUARIO
 // ==========================================
 const UsuarioSchema = new mongoose.Schema({
     nombre: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true } // Aquí se guardará encriptada
+    password: { type: String, required: true } 
 });
 const Usuario = mongoose.model("Usuario", UsuarioSchema);
 
 // ==========================================
-// 2. MODELO DE EVENTOS (ACTUALIZADO)
+// 2. MODELO DE EVENTOS (Con Teléfono en Pendientes)
 // ==========================================
 const EventoSchema = new mongoose.Schema({
     titulo: String,
@@ -52,8 +51,11 @@ const EventoSchema = new mongoose.Schema({
     limiteAsistentes: Number, 
     listaInvitados: [String],
     tokenCliente: String,
-    pendientes: [{ nombrePrincipal: String, acompanantes: [String] }],
-    // 🟢 NUEVO: Este campo vincula el evento con el usuario que lo creó
+    pendientes: [{ 
+        nombrePrincipal: String, 
+        acompanantes: [String],
+        telefono: String // 🟢 AGREGADO PARA WHATSAPP
+    }],
     creadorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }
 });
 const Evento = mongoose.model("Evento", EventoSchema);
@@ -61,17 +63,15 @@ const Evento = mongoose.model("Evento", EventoSchema);
 // ==========================================
 // 3. CANDADO DE SEGURIDAD (MIDDLEWARE)
 // ==========================================
-// Esta función revisa si el usuario trae un Token válido antes de dejarlo pasar
 const verificarToken = (req, res, next) => {
     const token = req.header("Authorization");
     if (!token) return res.status(401).json({ error: "Acceso denegado. Se necesita un token." });
 
     try {
-        // Quitamos la palabra "Bearer " que suele venir con el token
         const tokenLimpio = token.replace("Bearer ", "");
         const decodificado = jwt.verify(tokenLimpio, process.env.JWT_SECRET);
-        req.usuario = decodificado; // Guardamos los datos del usuario en la petición
-        next(); // Le damos pase
+        req.usuario = decodificado; 
+        next(); 
     } catch (error) {
         res.status(401).json({ error: "Token inválido o expirado." });
     }
@@ -84,11 +84,9 @@ app.post("/api/auth/registro", async (req, res) => {
     try {
         const { nombre, email, password } = req.body;
         
-        // Revisar si el correo ya existe
         const existe = await Usuario.findOne({ email });
         if (existe) return res.status(400).json({ error: "El correo ya está registrado." });
 
-        // Encriptar la contraseña
         const salt = await bcrypt.genSalt(10);
         const passwordEncriptada = await bcrypt.hash(password, salt);
 
@@ -108,11 +106,9 @@ app.post("/api/auth/login", async (req, res) => {
         const usuario = await Usuario.findOne({ email });
         if (!usuario) return res.status(400).json({ error: "Correo o contraseña incorrectos." });
 
-        // Comparar la contraseña ingresada con la encriptada
         const passCorrecta = await bcrypt.compare(password, usuario.password);
         if (!passCorrecta) return res.status(400).json({ error: "Correo o contraseña incorrectos." });
 
-        // Crear el Token (Pase VIP)
         const token = jwt.sign({ id: usuario._id, nombre: usuario.nombre }, process.env.JWT_SECRET, { expiresIn: "7d" });
         
         res.json({ token, nombre: usuario.nombre });
@@ -126,7 +122,6 @@ app.post("/api/auth/login", async (req, res) => {
 // ==========================================
 app.get("/", (req, res) => res.json({ estado: "Online" }));
 
-// 🟢 MODIFICADO: Protegido con verificarToken. Solo devuelve los eventos DEL USUARIO.
 app.get("/api/eventos", verificarToken, async (req, res) => {
     try {
         const eventos = await Evento.find({ creadorId: req.usuario.id }).sort({ _id: -1 });
@@ -136,7 +131,6 @@ app.get("/api/eventos", verificarToken, async (req, res) => {
     }
 });
 
-// 🟢 MODIFICADO: Protegido con verificarToken. Asigna el creadorId automáticamente.
 app.post("/api/eventos", verificarToken, async (req, res) => {
     try {
         const tokenGenerado = crypto.randomBytes(8).toString('hex');
@@ -145,7 +139,7 @@ app.post("/api/eventos", verificarToken, async (req, res) => {
             asistentes: [],
             pendientes: [],
             tokenCliente: tokenGenerado,
-            creadorId: req.usuario.id // Vinculamos el evento al usuario logueado
+            creadorId: req.usuario.id 
         });
         await evento.save();
         res.json(evento);
@@ -154,7 +148,6 @@ app.post("/api/eventos", verificarToken, async (req, res) => {
     }
 });
 
-// GET público para cargar un evento específico (No necesita token, para que los invitados puedan verlo)
 app.get("/api/eventos/:id", async (req, res) => {
     try {
         const evento = await Evento.findById(req.params.id);
@@ -165,7 +158,6 @@ app.get("/api/eventos/:id", async (req, res) => {
     }
 });
 
-// GET público para el panel del cliente
 app.get("/api/eventos/compartido/:token", async (req, res) => {
     try {
         const evento = await Evento.findOne({ tokenCliente: req.params.token });
@@ -181,15 +173,15 @@ app.get("/api/eventos/compartido/:token", async (req, res) => {
     }
 });
 
-// RUTAS PÚBLICAS (RSVP y Responder solicitudes) - Estas quedan igual porque las usan los invitados/clientes, no tú.
+// 🟢 RUTA RSVP ACTUALIZADA PARA CAPTURAR EL TELÉFONO
 app.post("/api/eventos/:id/rsvp", async (req, res) => {
-    // ... (El código exacto que ya tenías para RSVP)
     try {
         const evento = await Evento.findById(req.params.id);
         if (!evento) return res.status(404).json({ error: "Evento no encontrado" });
 
         const nombrePrincipal = req.body.nombrePrincipal ? req.body.nombrePrincipal.trim() : "";
         const acompanantes = req.body.acompanantes || []; 
+        const telefono = req.body.telefono ? req.body.telefono.trim() : ""; // 🟢 CAPTURAMOS EL NÚMERO
 
         if (!nombrePrincipal) return res.status(400).json({ error: "El nombre principal es requerido" });
 
@@ -207,7 +199,8 @@ app.post("/api/eventos/:id/rsvp", async (req, res) => {
                 const yaPendiente = evento.pendientes.some(p => p.nombrePrincipal.toLowerCase() === nombrePrincipal.toLowerCase());
                 if (yaPendiente) return res.status(400).json({ error: "Ya enviaste una solicitud. Está en revisión." });
 
-                evento.pendientes.push({ nombrePrincipal, acompanantes });
+                // 🟢 GUARDAMOS EL NÚMERO EN LA SALA DE ESPERA
+                evento.pendientes.push({ nombrePrincipal, acompanantes, telefono });
                 await evento.save();
                 return res.json({ ok: true, waitlist: true, mensaje: "Aprobación pendiente" });
             }
@@ -231,7 +224,6 @@ app.post("/api/eventos/:id/rsvp", async (req, res) => {
 });
 
 app.post("/api/eventos/compartido/:token/aprobar", async (req, res) => {
-    // ... (El código exacto que ya tenías)
     try {
         const evento = await Evento.findOne({ tokenCliente: req.params.token });
         if (!evento) return res.status(404).json({ error: "Token inválido" });
@@ -259,7 +251,6 @@ app.post("/api/eventos/compartido/:token/aprobar", async (req, res) => {
 });
 
 app.post("/api/eventos/compartido/:token/rechazar", async (req, res) => {
-    // ... (El código exacto que ya tenías)
     try {
         const evento = await Evento.findOne({ tokenCliente: req.params.token });
         if (!evento) return res.status(404).json({ error: "Token inválido" });
@@ -275,7 +266,6 @@ app.post("/api/eventos/compartido/:token/rechazar", async (req, res) => {
     }
 });
 
-// GET asistentes público (para que Admin y Cliente puedan verlo)
 app.get("/api/eventos/:id/asistentes", async (req, res) => {
     try {
         const evento = await Evento.findById(req.params.id);
@@ -286,7 +276,6 @@ app.get("/api/eventos/:id/asistentes", async (req, res) => {
     }
 });
 
-// 🟢 MODIFICADO: Protegido con verificarToken. Nadie puede subir fotos a tu Cloudinary sin estar logueado.
 app.post("/upload", verificarToken, upload.any(), async (req, res) => {
     try {
         if (!req.files || req.files.length === 0) return res.json({ urls: [] });

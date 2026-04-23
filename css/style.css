@@ -1,172 +1,214 @@
-/* 🟢 1. Reset universal para evitar que el padding rompa los anchos */
+/* 🟢 Reset y configuración base */
 * {
     box-sizing: border-box;
 }
 
 body {
     margin: 0;
-    padding: 20px; /* Da un poco de respiro en los bordes para móviles */
+    padding: 20px;
     font-family: 'Poppins', sans-serif;
     background: linear-gradient(135deg, #f5f7fa, #e4ecf7);
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh; /* 🟢 2. Cambiado de 'height' a 'min-height' para permitir scroll */
+    min-height: 100vh; 
 }
 
-/* Tarjeta */
+/* Tarjeta Principal */
 .card {
-    background: white;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
     padding: 40px;
     border-radius: 20px;
-    width: 100%; /* 🟢 3. Fluido para cualquier pantalla */
-    max-width: 400px; /* 🟢 3. Tope máximo para que no se vea gigante en PC */
+    width: 100%;
+    max-width: 420px; 
     text-align: center;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    animation: fadeIn 1s ease;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+    animation: fadeIn 0.8s ease-out;
 }
 
-/* Título elegante */
+/* Tipografía Elegante */
 .card h1 {
     font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    margin-top: 10px;
     margin-bottom: 20px;
-    color: #222;
+    color: #1a1a1a;
+    font-size: 28px;
 }
 
-/* Info */
-.info {
-    margin: 10px 0;
-    color: #555;
-}
-
-/* Input */
-input, select {
-    width: 100%;
-    padding: 12px;
-    margin-top: 15px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    font-family: 'Poppins', sans-serif; /* Unifica la fuente en los inputs */
-    outline: none;
-    transition: border-color 0.3s;
-}
-
-input:focus, select:focus {
-    border-color: #4CAF50; /* Un pequeño detalle cuando el usuario hace clic */
-}
-
-/* Botón */
-button {
-    margin-top: 20px;
-    padding: 12px;
-    width: 100%;
-    border: none;
-    border-radius: 10px;
-    background: #4CAF50;
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.3s, transform 0.1s; /* Animación suave */
-}
-
-button:hover {
-    background: #45a049;
-}
-
-button:active {
-    transform: scale(0.98); /* Efecto de "hundimiento" al hacer clic */
-}
-
-/* Imagen del evento */
-.img-evento {
-    width: 100%;
-    max-height: 250px; /* 🟢 4. Evita que una imagen vertical ocupe toda la pantalla */
-    object-fit: cover; /* 🟢 4. Recorta bonito sin deformar */
-    border-radius: 15px;
+.saludo-vip {
+    color: #4CAF50;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 22px;
     margin-bottom: 15px;
 }
 
-/* Video */
-video {
+/* Información del evento */
+.info {
+    margin: 10px 0;
+    color: #444;
+    font-size: 15px;
+}
+
+#contador {
+    font-weight: 500;
+    color: #d97706;
+    margin-bottom: 20px;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+}
+
+/* Inputs y Formularios */
+input {
+    width: 100%;
+    padding: 14px 15px;
+    margin-top: 12px;
     border-radius: 10px;
-    margin-top: 10px;
-    margin-bottom: 10px;
+    border: 1px solid #d1d5db;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s;
+    background: #f8fafc;
+}
+
+input:focus {
+    border-color: #4CAF50;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+/* =========================================
+   BOTONES
+========================================= */
+.btn-principal {
+    margin-top: 25px;
+    padding: 14px;
+    width: 100%;
+    border: none;
+    border-radius: 10px;
+    background: #222;
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+}
+
+.btn-principal:hover {
+    background: #4CAF50;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+}
+
+.btn-secundario {
+    background-color: transparent;
+    color: #666;
+    border: 1px dashed #cbd5e1;
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 15px;
+    font-size: 13px;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-secundario:hover {
+    background-color: #f1f5f9;
+    color: #333;
+    border-color: #94a3b8;
+}
+
+/* Botón de WhatsApp Inteligente */
+.btn-whatsapp {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #25D366;
+    color: white;
+    text-decoration: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 14px;
+    margin-top: 20px;
+    width: 100%;
+    transition: all 0.3s;
+    box-shadow: 0 4px 10px rgba(37, 211, 102, 0.2);
+}
+
+.btn-whatsapp:hover {
+    background-color: #1ebc5a;
+    transform: translateY(-2px);
 }
 
 /* Separador */
 hr {
     border: 0;
     height: 1px;
-    background: #eee;
-    margin: 20px 0;
-}
-
-/* Temas / Estilos de fondo */
-body.boda { background: linear-gradient(135deg, #fdfcfb, #e2d1c3); }
-body.quince { background: linear-gradient(135deg, #ffdde1, #ee9ca7); }
-body.cumple { background: linear-gradient(135deg, #a1c4fd, #c2e9fb); }
-body.corporativo { background: #e0eafc; } /* Ligeramente ajustado para verse más "pro" */
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px);}
-    to { opacity: 1; transform: translateY(0);}
+    background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+    margin: 25px 0;
 }
 
 /* =========================================
-   CARRUSEL DE IMÁGENES
+   CARRUSEL
 ========================================= */
 .carrusel-contenedor {
     position: relative;
     width: 100%;
-    max-width: 100%;
-    margin-bottom: 20px;
-    border-radius: 15px;
-    overflow: hidden; /* Evita que las imágenes se salgan de los bordes redondeados */
+    margin-bottom: 25px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
 
 .carrusel-imagenes {
     display: flex;
     justify-content: center;
-    background: #f8f8f8; /* Fondo suave mientras carga */
+    background: #f1f5f9;
 }
 
 .img-evento.slide {
     width: 100%;
-    height: 300px; /* Altura fija para que la tarjeta no brinque */
-    object-fit: cover; /* Recorta la imagen elegante sin deformarla */
-    border-radius: 15px;
-    animation: fadeIn 0.4s; /* Transición suave al cambiar foto */
+    height: 280px; 
+    object-fit: cover; 
+    border-radius: 16px;
+    animation: fadeIn 0.4s; 
 }
 
-/* Botones sobre la imagen */
 .btn-carrusel {
     cursor: pointer;
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    width: auto;
     padding: 10px 15px;
     color: white;
     font-weight: bold;
     font-size: 18px;
     transition: 0.3s ease;
-    border-radius: 0 5px 5px 0;
-    user-select: none;
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0,0,0,0.3);
     border: none;
-    margin: 0;
     z-index: 10;
 }
 
-.btn-carrusel:hover {
-    background-color: rgba(0,0,0,0.8);
-}
+.btn-carrusel:hover { background-color: rgba(0,0,0,0.7); }
+.next { right: 0; border-radius: 8px 0 0 8px; }
+.prev { left: 0; border-radius: 0 8px 8px 0; }
 
-.next {
-    right: 0;
-    border-radius: 5px 0 0 5px;
-}
-.prev {
-    left: 0;
+/* =========================================
+   TEMAS (PLANTILLAS)
+========================================= */
+body.boda { background: linear-gradient(135deg, #fdfcfb, #e2d1c3); }
+body.quince { background: linear-gradient(135deg, #ffdde1, #ee9ca7); }
+body.cumple { background: linear-gradient(135deg, #a1c4fd, #c2e9fb); }
+body.corporativo { background: linear-gradient(135deg, #e0eafc, #cfdef3); } 
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px);}
+    to { opacity: 1; transform: translateY(0);}
 }

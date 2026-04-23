@@ -5,7 +5,6 @@ let asistentesGlobal = [];
 // 1. SISTEMA DE AUTENTICACIÓN (LOGIN/REGISTRO)
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
-    // Si ya hay un token guardado, saltamos el login
     if (localStorage.getItem("token")) {
         mostrarDashboard();
     }
@@ -79,7 +78,6 @@ async function intentarLogin() {
 
         if (!res.ok) throw new Error(data.error || "Error de acceso");
 
-        // 🟢 ÉXITO: Guardamos el pase VIP en el navegador
         localStorage.setItem("token", data.token);
         localStorage.setItem("nombreUsuario", data.nombre);
         
@@ -109,9 +107,8 @@ function mostrarDashboard() {
 }
 
 // ==========================================
-// 2. GESTIÓN DE EVENTOS (CON SEGURIDAD)
+// 2. GESTIÓN DE EVENTOS
 // ==========================================
-// Función auxiliar para obtener el token en cada petición
 function getHeaders() {
     return {
         "Content-Type": "application/json",
@@ -127,7 +124,6 @@ function obtenerEnlaceInvitacion(id) {
 
 async function cargarEventos() {
     try {
-        // 🟢 Ahora enviamos el token al servidor para que nos dé solo NUESTROS eventos
         const res = await fetch(`${API_URL}/api/eventos`, { headers: getHeaders() });
         
         if (res.status === 401) {
@@ -142,7 +138,7 @@ async function cargarEventos() {
         contenedor.innerHTML = ""; 
 
         if (eventos.length === 0) {
-            contenedor.innerHTML = "<p style='text-align:center;'>Aún no tienes eventos. ¡Crea el primero en el panel de creación!</p>";
+            contenedor.innerHTML = "<p class='loading-text'>Aún no tienes eventos. ¡Crea el primero en el panel de creación!</p>";
             return;
         }
 
@@ -160,21 +156,19 @@ async function cargarEventos() {
                     <span>📅 ${ev.fecha || "Fecha sin definir"}</span>
                 </div>
                 <div class="evento-acciones">
-                    <button onclick="verDetalles('${ev._id}', '${ev.titulo}')" style="background:#222; color:white;">Administrar</button>
+                    <button onclick="verDetalles('${ev._id}', '${ev.titulo}')" style="background:#0f172a; color:white;">Administrar</button>
                     <button onclick="copiarLink('${ev._id}')">Link Gral.</button>
                     <button onclick="compartirWhatsApp('${ev._id}', '${ev.titulo}')" style="background:#25D366; color:white;">WhatsApp</button>
-                    ${ev.tokenCliente ? `<button onclick="navigator.clipboard.writeText('${linkCliente}').then(()=>alert('¡Enlace del cliente copiado!'))" style="background:#007BFF; color:white;">Link Cliente</button>` : ''}
+                    ${ev.tokenCliente ? `<button onclick="navigator.clipboard.writeText('${linkCliente}').then(()=>alert('¡Enlace del cliente copiado!'))" style="background:#2563eb; color:white;">Link Cliente</button>` : ''}
                 </div>
             `;
             contenedor.appendChild(div);
         });
     } catch (error) {
         console.error("Error:", error);
-        document.getElementById("eventos").innerHTML = "<p style='color:red;'>Error al conectar. ¿Iniciaste sesión?</p>";
+        document.getElementById("eventos").innerHTML = "<p style='color:red; text-align:center;'>Error al conectar. ¿Iniciaste sesión?</p>";
     }
 }
-
-// ... (Las funciones verDetalles, responderSolicitudAdmin, exportarCSV y PDF se quedan IGUAL, ya que las peticiones del admin usan las rutas públicas/compartidas para leer los datos del evento).
 
 async function verDetalles(id, titulo) {
     document.getElementById("detalles-evento").style.display = "block";
@@ -194,8 +188,9 @@ async function verDetalles(id, titulo) {
         const lista = document.getElementById("lista");
         lista.innerHTML = "";
 
+        // 1. VIPs a los que no se les ha enviado invitación
         if (evento.listaInvitados && evento.listaInvitados.length > 0) {
-            lista.innerHTML = `<li style="background: #eef8f1; padding: 10px; font-weight: bold;">👑 Enlaces VIP (Para Enviar):</li>`;
+            lista.innerHTML = `<li style="background: #f8fafc; padding: 10px; font-weight: 600; color: #1e293b;">👑 Enlaces VIP (Para Enviar):</li>`;
             
             evento.listaInvitados.forEach(invitado => {
                 const yaConfirmo = asistentes.some(a => a.toLowerCase() === invitado.toLowerCase());
@@ -208,37 +203,56 @@ async function verDetalles(id, titulo) {
                 const base = window.location.origin + rutaBase;
                 const linkVip = `${base}invitacion.html?id=${id}&invitado=${encodeURIComponent(invitado)}`;
                 
-                const mensajeWa = `¡Hola *${invitado}*! 🎉\nEstás invitado a *${titulo}*.\n\nEste es tu pase personal. Confirma aquí 👇\n${linkVip}`;
+                const mensajeWa = `¡Hola *${invitado}*! 🎉\nEstás invitado a *${titulo}*.\n\nEste es tu pase personal. Confirma tu asistencia aquí 👇\n${linkVip}`;
                 const urlWa = `https://wa.me/?text=${encodeURIComponent(mensajeWa)}`;
 
                 li.innerHTML = `
                     <span>
-                        ${yaConfirmo ? "✅" : "⏳"} <strong>${invitado}</strong>
+                        ${yaConfirmo ? "✅" : "⏳"} <strong style="font-weight:500;">${invitado}</strong>
                     </span>
-                    <button onclick="window.open('${urlWa}', '_blank')" style="background:#25D366; color:white; padding: 5px 10px; margin:0; font-size: 12px; width: auto; border:none; border-radius:4px; cursor:pointer;">
-                        Enviar Link
+                    <button onclick="window.open('${urlWa}', '_blank')" style="background:#25D366; color:white; padding: 6px 12px; font-size: 12px; border:none; border-radius:6px; cursor:pointer;">
+                        Enviar Invitación
                     </button>
                 `;
                 lista.appendChild(li);
             });
 
-            lista.innerHTML += `<li style="margin-top:15px; background: #f0f0f0; padding: 10px; font-weight: bold;">✅ Asistentes Confirmados:</li>`;
+            lista.innerHTML += `<li style="margin-top:15px; background: #f8fafc; padding: 10px; font-weight: 600; color: #1e293b;">✅ Asistentes Confirmados:</li>`;
         }
 
+        // 2. Asistentes Confirmados Totales
         if (asistentes.length === 0) {
-            lista.innerHTML += "<li style='color:#888; justify-content:center;'>Nadie ha confirmado aún.</li>";
+            lista.innerHTML += "<li style='color:#64748b; justify-content:center;'>Nadie ha confirmado aún.</li>";
         } else {
             asistentes.forEach(nombre => {
                 const li = document.createElement("li");
+                li.style.display = "flex";
+                li.style.justifyContent = "space-between";
+                li.style.alignItems = "center";
+
                 if (nombre.includes("(Acompañante")) {
-                    li.innerHTML = `<span style="color:#888; margin-left: 15px;">↳</span> <span style="font-size: 13px; color: #555;">${nombre}</span>`;
+                    // Es acompañante, lo mostramos con sangría y sin botón
+                    li.innerHTML = `
+                        <span><span style="color:#94a3b8; margin-left: 15px;">↳</span> <span style="font-size: 13px; color: #475569;">${nombre}</span></span>
+                    `;
                 } else {
-                    li.innerHTML = `✅ <strong>${nombre}</strong>`;
+                    // 🟢 ES TITULAR: Calculamos sus acompañantes y creamos el botón de WhatsApp
+                    const numAcompanantes = asistentes.filter(a => a.includes(`(Acompañante de ${nombre})`)).length;
+                    const textoAcom = numAcompanantes > 0 ? ` (junto con tus ${numAcompanantes} acompañantes)` : "";
+                    
+                    const mensajeConfirmacion = `¡Hola *${nombre}*! 🎉\n\nEste mensaje es para notificarte que tu asistencia a *${titulo}*${textoAcom} está oficialmente confirmada.\n\n¡Nos vemos pronto!`;
+                    const urlConfirmacion = `https://wa.me/?text=${encodeURIComponent(mensajeConfirmacion)}`;
+
+                    li.innerHTML = `
+                        <span>✅ <strong style="font-weight:500;">${nombre}</strong></span>
+                        <button onclick="window.open('${urlConfirmacion}', '_blank')" style="background:#0ea5e9; color:white; padding: 4px 10px; font-size: 11px; border:none; border-radius:4px; cursor:pointer;" title="Enviar confirmación de asistencia">💬 Pase Final</button>
+                    `;
                 }
                 lista.appendChild(li);
             });
         }
 
+        // 3. Sala de Espera (Aprobar, Rechazar y Enviar Confirmación por WA)
         const seccionPendientes = document.getElementById("seccion-pendientes-admin");
         const listaPendientes = document.getElementById("lista-pendientes");
         listaPendientes.innerHTML = "";
@@ -253,13 +267,30 @@ async function verDetalles(id, titulo) {
                 li.style.alignItems = "center";
                 li.style.flexWrap = "wrap";
                 
-                let textoExtra = solicitud.acompanantes.length > 0 ? `<br><small style="color:#888;">+ ${solicitud.acompanantes.length} acompañante(s)</small>` : "";
+                let textoExtra = solicitud.acompanantes.length > 0 ? `<br><small style="color:#b45309;">+ ${solicitud.acompanantes.length} acompañante(s)</small>` : "";
                 
+                let telLimpio = "";
+                let botonAvisarHTML = "";
+                
+                if (solicitud.telefono) {
+                    telLimpio = solicitud.telefono.replace(/\D/g, ''); 
+                    let textoAsistentesMensaje = solicitud.acompanantes.length > 0 ? ` (Tú y tus ${solicitud.acompanantes.length} acompañantes)` : "";
+                    const mensajeAprobado = `¡Hola ${solicitud.nombrePrincipal}! 🎉\n\nNos alegra confirmarte que tu solicitud para asistir a *${titulo}* ha sido APROBADA${textoAsistentesMensaje}.\n\n¡Te esperamos!`;
+                    const urlConfirmacionWa = `https://wa.me/${telLimpio}?text=${encodeURIComponent(mensajeAprobado)}`;
+                    
+                    botonAvisarHTML = `<button onclick="window.open('${urlConfirmacionWa}', '_blank')" style="background: #25D366; color:white; padding: 6px 12px; margin:0; font-size: 12px; border:none; border-radius:6px; cursor:pointer;" title="Avisar por WhatsApp">💬 Avisar</button>`;
+                }
+
                 li.innerHTML = `
-                    <div><strong>${solicitud.nombrePrincipal}</strong> ${textoExtra}</div>
+                    <div style="flex: 1; min-width: 150px; margin-bottom: 5px;">
+                        <strong style="color: #92400e;">${solicitud.nombrePrincipal}</strong> 
+                        <span style="font-size:11px; color:#666;">${solicitud.telefono ? '📱 ' + solicitud.telefono : ''}</span>
+                        ${textoExtra}
+                    </div>
                     <div style="display: flex; gap: 5px;">
-                        <button onclick="responderSolicitudAdmin('${evento.tokenCliente}', '${id}', '${titulo}', ${index}, 'aprobar')" style="background: #4CAF50; color:white; padding: 5px 10px; margin:0; font-size: 12px; width: auto; border:none; border-radius:4px; cursor:pointer;">Aprobar</button>
-                        <button onclick="responderSolicitudAdmin('${evento.tokenCliente}', '${id}', '${titulo}', ${index}, 'rechazar')" style="background: #f44336; color:white; padding: 5px 10px; margin:0; font-size: 12px; width: auto; border:none; border-radius:4px; cursor:pointer;">Rechazar</button>
+                        <button onclick="responderSolicitudAdmin('${evento.tokenCliente}', '${id}', '${titulo}', ${index}, 'aprobar')" style="background: #10b981; color:white; padding: 6px 12px; margin:0; font-size: 12px; border:none; border-radius:6px; cursor:pointer;">Aprobar</button>
+                        ${botonAvisarHTML}
+                        <button onclick="responderSolicitudAdmin('${evento.tokenCliente}', '${id}', '${titulo}', ${index}, 'rechazar')" style="background: #ef4444; color:white; padding: 6px 12px; margin:0; font-size: 12px; border:none; border-radius:6px; cursor:pointer;">X</button>
                     </div>
                 `;
                 listaPendientes.appendChild(li);
@@ -281,7 +312,12 @@ async function responderSolicitudAdmin(token, eventoId, tituloEvento, index, acc
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Fallo al procesar la solicitud");
+        
         verDetalles(eventoId, tituloEvento);
+        
+        if(accion === 'aprobar'){
+            alert("¡Invitado aprobado! Si dejó su número, recuerda enviarle un mensaje para avisarle.");
+        }
     } catch (error) { alert(error.message); }
 }
 

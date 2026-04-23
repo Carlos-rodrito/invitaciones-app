@@ -37,31 +37,30 @@ async function cargarDatosCliente() {
             document.getElementById("stat-limite").innerText = evento.limiteAsistentes;
             const cuposRestantes = evento.limiteAsistentes - totalConfirmados;
             document.getElementById("stat-disponibles").innerText = cuposRestantes > 0 ? cuposRestantes : 0;
-            if (cuposRestantes <= 0) document.getElementById("stat-disponibles").style.color = "red";
+            if (cuposRestantes <= 0) document.getElementById("stat-disponibles").style.color = "var(--danger)";
         } else {
             document.getElementById("stat-limite").innerText = "∞";
-            document.getElementById("stat-disponibles").innerText = "Ilimitado";
-            document.getElementById("stat-disponibles").style.fontSize = "18px";
+            document.getElementById("stat-disponibles").innerText = "Libre";
         }
 
-        // Renderizar confirmados oficiales
         const lista = document.getElementById("lista-clientes");
         lista.innerHTML = "";
+        
         if (evento.asistentes.length === 0) {
-            lista.innerHTML = "<li style='justify-content: center; color:#888;'>Aún no hay confirmaciones.</li>";
+            lista.innerHTML = "<li style='justify-content: center; color: var(--text-muted);'>Aún no hay confirmaciones.</li>";
         } else {
             evento.asistentes.forEach(nombre => {
                 const li = document.createElement("li");
                 if (nombre.includes("(Acompañante")) {
-                    li.innerHTML = `<span style="color:#888;">↳</span> <span style="font-size: 13px; color: #555;">${nombre}</span>`;
+                    li.innerHTML = `<span style="color:#94a3b8; margin-left: 15px;">↳</span> <span style="font-size: 13px; color: #475569;">${nombre}</span>`;
                 } else {
-                    li.innerHTML = `✅ <strong>${nombre}</strong>`;
+                    li.innerHTML = `✅ <strong style="font-weight:500;">${nombre}</strong>`;
                 }
                 lista.appendChild(li);
             });
         }
 
-        // 🟢 NUEVO: Renderizar sala de espera (Pendientes)
+        // 🟢 RENDERIZAR PENDIENTES CON BOTÓN DE WHATSAPP
         if (evento.pendientes && evento.pendientes.length > 0) {
             document.getElementById("seccion-pendientes").style.display = "block";
             const listaPendientes = document.getElementById("lista-pendientes");
@@ -74,13 +73,30 @@ async function cargarDatosCliente() {
                 li.style.alignItems = "center";
                 li.style.flexWrap = "wrap";
                 
-                let textoExtra = solicitud.acompanantes.length > 0 ? `<br><small style="color:#888;">+ ${solicitud.acompanantes.length} acompañante(s)</small>` : "";
+                let textoExtra = solicitud.acompanantes.length > 0 ? `<br><small style="color:#b45309;">+ ${solicitud.acompanantes.length} acompañante(s)</small>` : "";
                 
+                let telLimpio = "";
+                let botonAvisarHTML = "";
+                
+                if (solicitud.telefono) {
+                    telLimpio = solicitud.telefono.replace(/\D/g, ''); 
+                    let textoAsistentesMensaje = solicitud.acompanantes.length > 0 ? ` (Tú y tus ${solicitud.acompanantes.length} acompañantes)` : "";
+                    const mensajeAprobado = `¡Hola ${solicitud.nombrePrincipal}! 🎉\n\nNos alegra confirmarte que tu solicitud para asistir a *${tituloDelEvento}* ha sido APROBADA${textoAsistentesMensaje}.\n\n¡Te esperamos!`;
+                    const urlConfirmacionWa = `https://wa.me/${telLimpio}?text=${encodeURIComponent(mensajeAprobado)}`;
+                    
+                    botonAvisarHTML = `<button onclick="window.open('${urlConfirmacionWa}', '_blank')" style="background: #25D366; color:white; padding: 6px 12px; margin:0; font-size: 12px; border:none; border-radius:6px; cursor:pointer;">💬 Avisar</button>`;
+                }
+
                 li.innerHTML = `
-                    <div><strong>${solicitud.nombrePrincipal}</strong> ${textoExtra}</div>
+                    <div style="flex: 1; min-width: 150px; margin-bottom: 5px;">
+                        <strong style="color: #92400e;">${solicitud.nombrePrincipal}</strong> 
+                        <span style="font-size:11px; color:#666;">${solicitud.telefono ? '📱 ' + solicitud.telefono : ''}</span>
+                        ${textoExtra}
+                    </div>
                     <div style="display: flex; gap: 5px;">
-                        <button onclick="responderSolicitud(${index}, 'aprobar')" style="background: #4CAF50; padding: 5px 10px; margin:0; font-size: 12px; width: auto;">Aprobar</button>
-                        <button onclick="responderSolicitud(${index}, 'rechazar')" style="background: #f44336; padding: 5px 10px; margin:0; font-size: 12px; width: auto;">Rechazar</button>
+                        <button onclick="responderSolicitud(${index}, 'aprobar')" style="background: #10b981; color:white; padding: 6px 12px; margin:0; font-size: 12px; border:none; border-radius:6px; cursor:pointer;">Aprobar</button>
+                        ${botonAvisarHTML}
+                        <button onclick="responderSolicitud(${index}, 'rechazar')" style="background: #ef4444; color:white; padding: 6px 12px; margin:0; font-size: 12px; border:none; border-radius:6px; cursor:pointer;">X</button>
                     </div>
                 `;
                 listaPendientes.appendChild(li);
@@ -98,9 +114,7 @@ async function cargarDatosCliente() {
     }
 }
 
-// 🟢 NUEVO: Función para que el cliente apruebe/rechace
 async function responderSolicitud(index, accion) {
-    // Si el usuario da clic rápido, evitamos dobles envíos
     if (!confirm(`¿Estás seguro de que quieres ${accion} esta solicitud?`)) return;
 
     try {
@@ -113,8 +127,11 @@ async function responderSolicitud(index, accion) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Fallo al procesar la solicitud");
 
-        // Si fue exitoso, recargamos la página para actualizar las listas y los números
         cargarDatosCliente();
+        
+        if(accion === 'aprobar'){
+            alert("¡Invitado aprobado! Si dejó su número, recuerda enviarle un mensaje para avisarle.");
+        }
 
     } catch (error) {
         alert(error.message);
@@ -136,15 +153,13 @@ function exportarClienteCSV() {
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = `Confirmados_${tituloDelEvento.replace(/\s+/g, '_')}.csv`;
-    a.click();
+    a.href = url; a.download = `Confirmados_${tituloDelEvento.replace(/\s+/g, '_')}.csv`; a.click();
     URL.revokeObjectURL(url);
 }
 
 function exportarClientePDF() {
     if (asistentesDelCliente.length === 0) {
-        alert("Aún no hay invitados para descargar.");
+        alert("Aún no hay invitados confirmados para descargar.");
         return;
     }
     const { jsPDF } = window.jspdf;

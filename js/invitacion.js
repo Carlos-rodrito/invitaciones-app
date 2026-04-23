@@ -8,22 +8,18 @@ let imagenActual = 0;
 
 function formatearFecha(fechaIso) {
     if (!fechaIso) return "Fecha por definir";
-    
     const fecha = new Date(fechaIso);
     if (isNaN(fecha.getTime())) return fechaIso;
 
     const opcionesFecha = { day: 'numeric', month: 'long', year: 'numeric' };
     const opcionesHora = { hour: '2-digit', minute: '2-digit' };
     
-    const fechaTexto = fecha.toLocaleDateString('es-ES', opcionesFecha);
-    const horaTexto = fecha.toLocaleTimeString('es-ES', opcionesHora);
-    
-    return `${fechaTexto} a las ${horaTexto} hrs`;
+    return `${fecha.toLocaleDateString('es-ES', opcionesFecha)} a las ${fecha.toLocaleTimeString('es-ES', opcionesHora)} hrs`;
 }
 
 async function cargarEvento() {
     if (!id) {
-        document.body.innerHTML = "<h1 style='text-align:center; padding: 50px;'>Error: Evento no encontrado</h1>";
+        document.body.innerHTML = "<h1 style='text-align:center; padding: 50px; font-family: sans-serif;'>Error: Evento no encontrado</h1>";
         return;
     }
 
@@ -110,23 +106,19 @@ function iniciarContador(fecha) {
     }, 1000);
 }
 
-// 🟢 NUEVA FUNCIÓN: Agrega cajitas de texto para acompañantes
 function agregarAcompanante() {
     const contenedor = document.getElementById("contenedor-acompanantes");
     const input = document.createElement("input");
     input.type = "text";
-    input.className = "input-acompanante"; // Clase para identificarlos luego
+    input.className = "input-acompanante"; 
     input.placeholder = "Nombre del acompañante";
-    input.style.marginTop = "10px";
     contenedor.appendChild(input);
 }
-
-// 🟢 MODIFICADA: Enviar titular + acompañantes
-// ... (arriba queda igual)
 
 async function confirmar(event) {
     const inputNombre = document.getElementById("nombre");
     const nombrePrincipal = invitadoVIP ? invitadoVIP : inputNombre.value.trim(); 
+    const tituloEvento = document.getElementById("titulo").innerText;
 
     if (!nombrePrincipal) {
         alert("Ingresa tu nombre antes de confirmar asistencia.");
@@ -140,6 +132,11 @@ async function confirmar(event) {
         if (input.value.trim() !== "") acompanantesExtra.push(input.value.trim());
     });
 
+    // Cambiar estado del botón
+    const btnConfirmar = event.target;
+    btnConfirmar.innerText = "Procesando...";
+    btnConfirmar.disabled = true;
+
     try {
         const res = await fetch(`${API_URL}/api/eventos/${id}/rsvp`, {
             method: "POST",
@@ -150,45 +147,55 @@ async function confirmar(event) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Fallo en servidor");
 
-        // Ocultar formulario
+        // Ocultar elementos del formulario
         if (invitadoVIP) document.getElementById("saludo-vip").style.display = "none";
         else document.getElementById("area-ingreso").style.display = "none";
 
         document.getElementById("contenedor-acompanantes").style.display = "none";
         document.getElementById("btn-add-acompanante").style.display = "none";
-        
-        if (event && event.target) event.target.style.display = "none";
-        else document.getElementById("btn-confirmar").style.display = "none";
+        btnConfirmar.style.display = "none";
 
-        // 🟢 NUEVO: Decidir qué mensaje mostrar
+        // 🟢 PREPARAR EL MENSAJE DE WHATSAPP
+        let mensajeWa = "";
+        if (data.waitlist) {
+            mensajeWa = `¡Hola! Acabo de enviar mi solicitud de asistencia para *${tituloEvento}*. Mi nombre es ${nombrePrincipal}. Quedo a la espera de tu confirmación. ⏳`;
+        } else {
+            let textoExtras = acompanantesExtra.length > 0 ? ` junto con ${acompanantesExtra.length} acompañante(s)` : "";
+            mensajeWa = `¡Hola! Acabo de confirmar mi asistencia a *${tituloEvento}*${textoExtras}. Mi nombre es ${nombrePrincipal}. ¡Ahí nos vemos! 🎉`;
+        }
+        const urlWa = `https://wa.me/?text=${encodeURIComponent(mensajeWa)}`;
+
+        // 🟢 RENDERIZAR MENSAJE FINAL Y BOTÓN
         const mensajeExito = document.createElement("div");
         mensajeExito.style.textAlign = "center";
-        mensajeExito.style.marginTop = "20px";
+        mensajeExito.style.marginTop = "10px";
 
         if (data.waitlist) {
-            // Mensaje de Lista de Espera
             mensajeExito.innerHTML = `
-                <h2 style="color: #FF9800; margin-bottom: 5px;">¡Solicitud Enviada! ⏳</h2>
-                <p style="color: #444; font-size: 15px;">Gracias <strong>${nombrePrincipal}</strong>. Al ser un evento de lista privada, tu solicitud ha sido enviada al organizador para su aprobación.</p>
-                <p style="color: #888; font-size: 13px;">Te notificaremos si se abren cupos.</p>
+                <h2 style="color: #d97706; font-family: 'Playfair Display', serif; margin-bottom: 10px;">¡Solicitud Enviada! ⏳</h2>
+                <p style="color: #444; font-size: 14px;">Gracias <strong>${nombrePrincipal}</strong>. Tu solicitud ha sido enviada al organizador para su aprobación.</p>
+                <a href="${urlWa}" target="_blank" class="btn-whatsapp">
+                    <span style="font-size: 18px; margin-right: 8px;">💬</span> Notificar al organizador
+                </a>
             `;
         } else {
-            // Mensaje de Éxito Normal
-            let textoAcompanantes = "";
-            if (acompanantesExtra.length > 0) {
-                textoAcompanantes = `<p style="color: #888; font-size: 13px; margin-top: 5px;">+ ${acompanantesExtra.length} acompañante(s) registrado(s)</p>`;
-            }
+            let textoAcompanantes = acompanantesExtra.length > 0 ? `<p style="color: #64748b; font-size: 13px; margin-top: 5px;">+ ${acompanantesExtra.length} acompañante(s) registrado(s)</p>` : "";
             mensajeExito.innerHTML = `
-                <h2 style="color: #4CAF50; margin-bottom: 5px;">¡Asistencia Confirmada! 🎉</h2>
-                <p style="color: #444; font-size: 15px;">Te esperamos en el evento, <strong>${nombrePrincipal}</strong>.</p>
+                <h2 style="color: #10b981; font-family: 'Playfair Display', serif; margin-bottom: 10px;">¡Asistencia Confirmada! 🎉</h2>
+                <p style="color: #444; font-size: 14px;">Te esperamos en el evento, <strong>${nombrePrincipal}</strong>.</p>
                 ${textoAcompanantes}
+                <a href="${urlWa}" target="_blank" class="btn-whatsapp">
+                    <span style="font-size: 18px; margin-right: 8px;">💬</span> Avisar al organizador
+                </a>
             `;
         }
         
         document.querySelector(".card").appendChild(mensajeExito);
 
     } catch (error) {
-        alert(error.message); 
+        alert(error.message);
+        btnConfirmar.innerText = "Confirmar asistencia";
+        btnConfirmar.disabled = false;
     }
 }
 

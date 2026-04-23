@@ -3,22 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invitación</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display&family=Poppins&display=swap" rel="stylesheet">
+    <title>Invitación Especial</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    <style>
-        /* Estilos rápidos para el botón de acompañante */
-        .btn-secundario {
-            background-color: #f0f0f0;
-            color: #333;
-            border: 1px dashed #ccc;
-            margin-top: 10px;
-            font-size: 13px;
-        }
-        .btn-secundario:hover {
-            background-color: #e0e0e0;
-        }
-    </style>
 </head>
 <body>
 
@@ -41,14 +28,14 @@
     <div id="area-ingreso">
         <input type="text" id="nombre" placeholder="Tu nombre y apellido">
     </div>
-    <h2 id="saludo-vip" style="display: none; color: #4CAF50; font-family: 'Playfair Display', serif;"></h2>
+    
+    <h2 id="saludo-vip" class="saludo-vip" style="display: none;"></h2>
 
-    <div id="contenedor-acompanantes">
-        </div>
+    <div id="contenedor-acompanantes"></div>
     
     <button id="btn-add-acompanante" class="btn-secundario" onclick="agregarAcompanante()">+ Añadir acompañante</button>
 
-    <button id="btn-confirmar" onclick="confirmar(event)" style="margin-top: 15px;">Confirmar asistencia</button>
+    <button id="btn-confirmar" class="btn-principal" onclick="confirmar(event)">Confirmar asistencia</button>
 </div>
 
 <script src="js/invitacion.js"></script>
