@@ -517,3 +517,43 @@ button {
     color: var(--primary);
     font-weight: bold;
 }
+
+/* =========================================
+   ESTADÍSTICAS DEL CLIENTE (cliente.html)
+========================================= */
+.stats-grid {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+    flex-wrap: wrap; /* Permite que bajen de línea en móviles muy pequeños */
+}
+
+.stat-box {
+    flex: 1;
+    min-width: 100px;
+    background: var(--bg-body);
+    padding: 20px 10px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.stat-num {
+    font-size: 28px;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+/* Colores de texto de utilidad */
+.text-success { color: var(--success); }
+.text-primary { color: var(--primary); }
+.text-muted { color: var(--text-muted); }
