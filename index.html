@@ -4,106 +4,128 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Creador de Eventos PRO</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-    <style>
-        /* Estilos para las pantallas de Auth */
-        #auth-container { max-width: 400px; margin: 50px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .auth-switch { text-align: center; margin-top: 15px; font-size: 13px; color: #007BFF; cursor: pointer; text-decoration: underline; }
-        #registro-box { display: none; }
-        
-        /* Estructura de la App */
-        #app-container { display: none; max-width: 600px; margin: 20px auto; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .user-info { font-size: 14px; color: #555; }
-        .btn-panel { background: #222; color: white; text-decoration: none; padding: 8px 15px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-right: 10px; }
-        .btn-logout { background: #d32f2f; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-size: 13px; cursor: pointer; }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/panel.css">
 </head>
 <body>
 
-<div id="auth-container">
+<div id="auth-container" class="container auth-box">
+    
     <div id="login-box">
-        <h2 style="text-align: center; margin-top: 0;">Bienvenido</h2>
-        <p style="text-align: center; font-size: 13px; color: #666;">Inicia sesión para crear eventos</p>
+        <div class="brand-header">
+            <h2>Portal de Organizadores</h2>
+            <p>Inicia sesión para gestionar tus eventos</p>
+        </div>
         
-        <input type="email" id="login-email" placeholder="Correo electrónico" style="width: 100%; margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-        <input type="password" id="login-pass" placeholder="Contraseña" style="width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+        <div class="form-group">
+            <label>Correo Electrónico</label>
+            <input type="email" id="login-email" placeholder="ejemplo@correo.com">
+        </div>
+        <div class="form-group">
+            <label>Contraseña</label>
+            <input type="password" id="login-pass" placeholder="Tu contraseña secreta">
+        </div>
         
-        <button onclick="intentarLogin()" id="btn-login" style="width: 100%; padding: 12px; background: #4CAF50; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Ingresar</button>
-        <p id="login-error" style="color: red; text-align: center; display: none; font-size: 13px; margin-top: 10px;"></p>
-        <p class="auth-switch" onclick="mostrarRegistro()">¿No tienes cuenta? Regístrate aquí</p>
+        <button onclick="intentarLogin()" id="btn-login" class="btn-primary">Ingresar al Sistema</button>
+        <p id="login-error" class="error-msg"></p>
+        <p class="auth-switch" onclick="mostrarRegistro()">¿Eres nuevo? Solicita una cuenta aquí</p>
     </div>
 
-    <div id="registro-box">
-        <h2 style="text-align: center; margin-top: 0;">Crear Cuenta</h2>
-        <input type="text" id="reg-nombre" placeholder="Tu Nombre o Agencia" style="width: 100%; margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-        <input type="email" id="reg-email" placeholder="Correo electrónico" style="width: 100%; margin-bottom: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-        <input type="password" id="reg-pass" placeholder="Crea una contraseña" style="width: 100%; margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+    <div id="registro-box" style="display: none;">
+        <div class="brand-header">
+            <h2>Crear Cuenta</h2>
+            <p>Únete a nuestra plataforma corporativa</p>
+        </div>
+
+        <div class="form-group">
+            <label>Nombre de Agencia o Titular</label>
+            <input type="text" id="reg-nombre" placeholder="Ej. Eventos Corporativos S.A.">
+        </div>
+        <div class="form-group">
+            <label>Correo Electrónico</label>
+            <input type="email" id="reg-email" placeholder="ejemplo@correo.com">
+        </div>
+        <div class="form-group">
+            <label>Crear Contraseña</label>
+            <input type="password" id="reg-pass" placeholder="Usa una contraseña segura">
+        </div>
         
-        <button onclick="intentarRegistro()" id="btn-registro" style="width: 100%; padding: 12px; background: #2196F3; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Registrarse</button>
-        <p class="auth-switch" onclick="mostrarLogin()">Ya tengo cuenta. Volver a Login</p>
+        <button onclick="intentarRegistro()" id="btn-registro" class="btn-primary">Registrar Cuenta</button>
+        <p class="auth-switch" onclick="mostrarLogin()">Ya tengo una cuenta. Volver al inicio</p>
     </div>
 </div>
 
-<div id="app-container">
+<div id="app-container" style="display: none;">
     
     <div class="top-bar">
-        <div class="user-info">Hola, <strong id="nombre-usuario-display">Organizador</strong></div>
-        <div>
-            <a href="admin.html" class="btn-panel">Ir a Mi Panel</a>
-            <button onclick="cerrarSesionApp()" class="btn-logout">Salir</button>
+        <div class="user-info">
+            <span class="avatar">👤</span>
+            <div>
+                <small>Bienvenido,</small><br>
+                <strong id="nombre-usuario-display">Organizador</strong>
+            </div>
+        </div>
+        <div class="top-actions">
+            <a href="admin.html" class="btn-outline">Ir al Dashboard</a>
+            <button onclick="cerrarSesionApp()" class="btn-danger">Cerrar Sesión</button>
         </div>
     </div>
 
-    <div class="card">
-        <h1 style="text-align: center; margin-top: 0;">Crear Nuevo Evento</h1>
+    <div class="container app-box">
+        <h1 class="section-title">Generador de Evento</h1>
+        <hr class="separador">
 
         <div class="form-group">
             <label for="titulo">Título del Evento *</label>
-            <input type="text" id="titulo" placeholder="Ej. Boda de Ana y Luis" required>
+            <input type="text" id="titulo" placeholder="Ej. Lanzamiento de Producto 2026" required>
         </div>
 
-        <div class="form-group">
-            <label for="fecha">Fecha y Hora *</label>
-            <input type="datetime-local" id="fecha" required>
+        <div class="grid-2-col">
+            <div class="form-group">
+                <label for="fecha">Fecha y Hora *</label>
+                <input type="datetime-local" id="fecha" required>
+            </div>
+            <div class="form-group">
+                <label for="limite">Límite de Cupos</label>
+                <input type="number" id="limite" placeholder="Ej. 150 (Dejar en blanco si es libre)" min="1">
+            </div>
         </div>
 
         <div class="form-group">
             <label for="lugar">Lugar / Dirección *</label>
-            <input type="text" id="lugar" placeholder="Ej. Salón Las Perlas, Zona 10" required>
+            <input type="text" id="lugar" placeholder="Ej. Centro de Convenciones, Salón A" required>
         </div>
 
         <div class="form-group">
-            <label for="limite">Límite de Invitados (Opcional)</label>
-            <input type="number" id="limite" placeholder="Ej. 100" min="1">
+            <label for="lista-vip">Lista de Invitados Exclusivos (Opcional)</label>
+            <span class="help-text">Coloca un nombre por línea. Quienes no estén en esta lista pasarán a sala de espera.</span>
+            <textarea id="lista-vip" placeholder="Lic. Roberto Gómez&#10;Ing. Mariana Silva&#10;Directiva General" rows="4"></textarea>
         </div>
 
-        <div class="form-group">
-            <label for="lista-vip">Lista VIP Privada (Opcional)</label>
-            <p style="font-size: 11px; color: #888; margin-top: -5px; margin-bottom: 5px;">Si agregas nombres, solo ellos podrán confirmar automáticamente. Los demás irán a lista de espera. Pon un nombre por línea.</p>
-            <textarea id="lista-vip" placeholder="Ana García&#10;Luis Perez&#10;Familia Lopez" rows="4" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;"></textarea>
+        <div class="grid-2-col">
+            <div class="form-group">
+                <label for="imagenes">Imágenes (Galería) *</label>
+                <input type="file" id="imagenes" accept="image/*" multiple required>
+            </div>
+            <div class="form-group">
+                <label for="tipo">Plantilla / Tema de Invitación</label>
+                <select id="tipo">
+                    <option value="boda">Boda (Tonos Arena / Elegante)</option>
+                    <option value="quince">15 Años (Tonos Rosados)</option>
+                    <option value="cumple">Cumpleaños (Tonos Azules)</option>
+                    <option value="corporativo">Corporativo (Azul Profesional)</option>
+                </select>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="imagenes">Subir Imágenes (Carrusel) *</label>
-            <input type="file" id="imagenes" accept="image/*" multiple required>
-        </div>
-
-        <div class="form-group">
-            <label for="tipo">Plantilla / Tema</label>
-            <select id="tipo">
-                <option value="elegante">Elegante (Oscuro/Dorado)</option>
-                <option value="casual">Casual (Claro/Divertido)</option>
-            </select>
-        </div>
-
-        <button id="btn-crear" onclick="crearEvento()" style="width: 100%; padding: 12px; font-size: 16px; margin-top: 10px;">Generar Invitación</button>
+        <button id="btn-crear" onclick="crearEvento()" class="btn-primary btn-large">Generar Enlace Seguro</button>
         
-        <p id="mensaje-servidor" style="display: none; text-align: center; color: #007BFF; font-size: 14px;">Generando evento en la nube, por favor espera... ☁️</p>
+        <div id="mensaje-servidor" class="alert-info">
+            ⏳ Procesando y encriptando datos en la nube...
+        </div>
 
-        <div id="link" style="margin-top: 20px; text-align: center; padding: 15px; background: #f9f9f9; border-radius: 8px;">
-            Aún no se ha generado el enlace.
+        <div id="link" class="result-box">
+            <p style="color: #64748b; font-size: 14px; margin: 0;">Tu enlace se mostrará aquí al terminar.</p>
         </div>
     </div>
 </div>
