@@ -328,3 +328,192 @@ button {
     
     input, select, textarea { font-size: 16px; /* Previene zoom en iOS */ }
 }
+
+/* =========================================
+   ESTILOS ESPECÍFICOS DEL DASHBOARD (Admin & Cliente)
+========================================= */
+.dashboard-wrapper {
+    display: none;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.link-crear {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.loading-text {
+    text-align: center;
+    color: var(--text-muted);
+}
+
+/* Tarjetas de Eventos */
+.evento-item {
+    background: var(--bg-card); 
+    border: 1px solid var(--border-color); 
+    padding: 15px 20px;
+    border-radius: 8px; 
+    margin-bottom: 15px; 
+    display: flex;
+    justify-content: space-between; 
+    align-items: center; 
+    flex-wrap: wrap; 
+    gap: 15px;
+    transition: all 0.2s ease;
+}
+
+.evento-item:hover {
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.evento-info strong {
+    font-size: 16px;
+    color: var(--text-main);
+    display: block;
+    font-weight: 600;
+}
+
+.evento-info span {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.evento-acciones {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.evento-acciones button {
+    width: auto;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: var(--text-main);
+}
+
+.evento-acciones button:hover {
+    background: #e2e8f0;
+}
+
+/* Panel de Detalles del Evento */
+.detalles-panel {
+    display: none;
+    background: var(--bg-card);
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin-top: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.detalles-titulo {
+    margin-top: 0;
+    color: var(--text-main);
+    font-size: 20px;
+}
+
+.detalles-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+}
+
+.col-qr {
+    flex: 1;
+    min-width: 200px;
+}
+
+.col-listas {
+    flex: 2;
+    min-width: 250px;
+}
+
+.panel-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+/* Código QR y Descargas */
+.qr-box {
+    text-align: center;
+    margin-top: 15px;
+    background: var(--bg-body);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px dashed var(--border-color);
+}
+
+.qr-box canvas {
+    border-radius: 4px;
+}
+
+.acciones-descarga {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 25px;
+}
+
+.acciones-descarga button {
+    width: 100%;
+}
+
+/* Listas de Asistentes */
+.asistentes-list {
+    list-style: none;
+    padding: 0;
+    max-height: 350px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.asistentes-list li {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 14px;
+    color: var(--text-main);
+}
+
+.asistentes-list li:last-child {
+    border-bottom: none;
+}
+
+.asistentes-list::-webkit-scrollbar { width: 6px; }
+.asistentes-list::-webkit-scrollbar-track { background: var(--bg-body); }
+.asistentes-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+/* Panel de Pendientes (Lista Amarilla) */
+.panel-pendientes {
+    margin-top: 20px;
+    background: #fffbeb;
+    border: 1px dashed #fcd34d;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.pendientes-titulo {
+    font-size: 14px;
+    color: #b45309;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.lista-amarilla {
+    border-color: #fde68a;
+}
+
+.text-primary {
+    color: var(--primary);
+    font-weight: bold;
+}

@@ -3,53 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Administración</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Panel de Administración PRO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/panel.css">
-    <style>
-        .admin-container { max-width: 800px; }
-        
-        .evento-item {
-            background: #fafafa; border: 1px solid #eee; padding: 15px;
-            border-radius: 8px; margin-bottom: 15px; display: flex;
-            justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
-        }
-
-        .evento-info strong { font-size: 16px; color: #222; display: block; }
-        .evento-info span { font-size: 13px; color: #666; }
-
-        .evento-acciones button {
-            width: auto; padding: 8px 12px; margin: 0 5px 5px 0;
-            font-size: 13px; background: #e0e0e0; color: #333;
-        }
-        .evento-acciones button:hover { background: #4CAF50; color: white; }
-
-        #dashboard { display: none; }
-        
-        #detalles-evento {
-            display: none; background: #f9f9f9; padding: 20px;
-            border-radius: 12px; border: 1px dashed #ccc; margin-top: 20px;
-        }
-
-        #qr-container { text-align: center; margin-top: 15px; }
-        #qr { border-radius: 8px; }
-
-        .asistentes-list { list-style: none; padding: 0; max-height: 350px; overflow-y: auto; }
-        .asistentes-list li { padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
-        .asistentes-list li:last-child { border-bottom: none; }
-
-        /* Estilos de Auth */
-        .auth-switch { text-align: center; margin-top: 15px; font-size: 13px; color: #666; cursor: pointer; text-decoration: underline; }
-        #registro-box { display: none; }
-        
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .top-bar button { width: auto; background: #d32f2f; padding: 8px 15px; font-size: 14px; margin: 0; }
-    </style>
 </head>
 <body>
 
-<div class="container" id="login-box">
-    <h1>Acceso Restringido</h1>
+<div class="container auth-box" id="login-box">
+    <div class="brand-header">
+        <h2>Acceso Restringido</h2>
+        <p>Panel exclusivo de Administración</p>
+    </div>
+    
     <div class="form-group">
         <label>Correo Electrónico</label>
         <input type="email" id="login-email" placeholder="ejemplo@correo.com">
@@ -58,13 +23,18 @@
         <label>Contraseña</label>
         <input type="password" id="login-pass" placeholder="Ingresa tu contraseña">
     </div>
-    <button onclick="intentarLogin()" id="btn-login">Ingresar al Panel</button>
-    <p id="login-error" style="color: red; text-align: center; display: none; font-size: 14px;"></p>
+    
+    <button onclick="intentarLogin()" id="btn-login" class="btn-primary">Ingresar al Panel</button>
+    <p id="login-error" class="error-msg"></p>
     <p class="auth-switch" onclick="mostrarRegistro()">¿No tienes cuenta? Crear una aquí</p>
 </div>
 
-<div class="container" id="registro-box">
-    <h1>Crear Cuenta</h1>
+<div class="container auth-box" id="registro-box" style="display: none;">
+    <div class="brand-header">
+        <h2>Crear Cuenta</h2>
+        <p>Configura tu perfil de Organizador</p>
+    </div>
+    
     <div class="form-group">
         <label>Tu Nombre</label>
         <input type="text" id="reg-nombre" placeholder="Ej. Agencia de Eventos">
@@ -77,44 +47,55 @@
         <label>Contraseña</label>
         <input type="password" id="reg-pass" placeholder="Crea una contraseña segura">
     </div>
-    <button onclick="intentarRegistro()" id="btn-registro">Crear Cuenta</button>
+    
+    <button onclick="intentarRegistro()" id="btn-registro" class="btn-primary">Crear Cuenta</button>
     <p class="auth-switch" onclick="mostrarLogin()">Volver a Iniciar Sesión</p>
 </div>
 
-<div class="container admin-container" id="dashboard">
+<div id="dashboard" class="dashboard-wrapper">
+    
     <div class="top-bar">
-        <h1>Tus Eventos</h1>
-        <button onclick="cerrarSesion()">Cerrar Sesión</button>
+        <div class="user-info">
+            <span class="avatar">⚙️</span>
+            <div>
+                <strong style="font-size: 16px;">Tus Eventos Activos</strong>
+                <br><small><a href="index.html" class="link-crear">+ Crear nuevo evento</a></small>
+            </div>
+        </div>
+        <div class="top-actions">
+            <button onclick="cerrarSesion()" class="btn-danger">Cerrar Sesión</button>
+        </div>
     </div>
     
     <div id="eventos">
-        <p style="text-align:center; color:#888;">Cargando eventos...</p>
+        <p class="loading-text">Cargando eventos...</p>
     </div>
 
-    <div id="detalles-evento">
-        <h2 id="evento-titulo-detalle" style="margin-top: 0;">Selecciona un evento</h2>
+    <div id="detalles-evento" class="detalles-panel">
+        <h2 id="evento-titulo-detalle" class="detalles-titulo">Selecciona un evento</h2>
+        <hr class="separador">
         
-        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-            <div style="flex: 1; min-width: 200px;">
-                <h3 style="font-size: 16px;">Código QR</h3>
-                <div id="qr-container">
+        <div class="detalles-grid">
+            <div class="col-qr">
+                <h3 class="panel-subtitle">Control de Acceso</h3>
+                <div id="qr-container" class="qr-box">
                     <canvas id="qr"></canvas>
                 </div>
                 
-                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 25px;">
-                    <button onclick="exportarCSV()">Exportar Excel (.CSV)</button>
-                    <button onclick="exportarPDF()" style="background:#d32f2f; color:white;">Exportar PDF</button>
+                <div class="acciones-descarga">
+                    <button onclick="exportarCSV()" class="btn-outline">Descargar Excel (.CSV)</button>
+                    <button onclick="exportarPDF()" class="btn-danger">Descargar PDF</button>
                 </div>
             </div>
 
-            <div style="flex: 2; min-width: 250px;">
-                <h3 style="font-size: 16px;">Panel de Asistentes (<span id="total">0</span> Confirmados)</h3>
+            <div class="col-listas">
+                <h3 class="panel-subtitle">Panel de Asistentes (<span id="total" class="text-primary">0</span> Confirmados)</h3>
                 
-                <ul id="lista" class="asistentes-list" style="background: white; border: 1px solid #eee; border-radius: 8px;"></ul>
+                <ul id="lista" class="asistentes-list"></ul>
                 
-                <div id="seccion-pendientes-admin" style="display: none; margin-top: 20px; background: #fff3cd; border: 1px dashed #ffeeba; padding: 15px; border-radius: 8px;">
-                    <h3 style="font-size: 15px; color: #856404; margin-top: 0;">⏳ Lista de Espera (Por Aprobar)</h3>
-                    <ul id="lista-pendientes" class="asistentes-list" style="background: white; border: 1px solid #eee; border-radius: 5px;"></ul>
+                <div id="seccion-pendientes-admin" class="panel-pendientes" style="display: none;">
+                    <h3 class="pendientes-titulo">⏳ Lista de Espera (Por Aprobar)</h3>
+                    <ul id="lista-pendientes" class="asistentes-list lista-amarilla"></ul>
                 </div>
             </div>
         </div>
