@@ -1,29 +1,122 @@
 const API_URL = "https://invitaciones-backend.onrender.com";
-const PASSWORD = "Eventos-2538"; 
-
 let asistentesGlobal = [];
 
+// ==========================================
+// 1. SISTEMA DE AUTENTICACIÓN (LOGIN/REGISTRO)
+// ==========================================
 document.addEventListener("DOMContentLoaded", () => {
-    if (localStorage.getItem("auth") === "ok") {
+    // Si ya hay un token guardado, saltamos el login
+    if (localStorage.getItem("token")) {
         mostrarDashboard();
     }
 });
 
-function intentarAcceso() {
-    const pass = document.getElementById("pass").value;
-    
-    if (pass === PASSWORD) {
-        localStorage.setItem("auth", "ok");
-        mostrarDashboard();
-    } else {
-        document.getElementById("login-error").style.display = "block";
+function mostrarRegistro() {
+    document.getElementById("login-box").style.display = "none";
+    document.getElementById("registro-box").style.display = "block";
+}
+
+function mostrarLogin() {
+    document.getElementById("registro-box").style.display = "none";
+    document.getElementById("login-box").style.display = "block";
+}
+
+async function intentarRegistro() {
+    const nombre = document.getElementById("reg-nombre").value;
+    const email = document.getElementById("reg-email").value;
+    const password = document.getElementById("reg-pass").value;
+
+    if (!nombre || !email || !password) return alert("Completa todos los campos");
+
+    const btn = document.getElementById("btn-registro");
+    btn.disabled = true;
+    btn.innerText = "Creando cuenta...";
+
+    try {
+        const res = await fetch(`${API_URL}/api/auth/registro`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nombre, email, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || "Error al registrar");
+        
+        alert("Cuenta creada con éxito. Ahora inicia sesión.");
+        mostrarLogin();
+        document.getElementById("login-email").value = email;
+    } catch (error) {
+        alert(error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Crear Cuenta";
     }
+}
+
+async function intentarLogin() {
+    const email = document.getElementById("login-email").value;
+    const password = document.getElementById("login-pass").value;
+    const errorMsg = document.getElementById("login-error");
+
+    if (!email || !password) {
+        errorMsg.innerText = "Ingresa correo y contraseña";
+        errorMsg.style.display = "block";
+        return;
+    }
+
+    const btn = document.getElementById("btn-login");
+    btn.disabled = true;
+    btn.innerText = "Verificando...";
+
+    try {
+        const res = await fetch(`${API_URL}/api/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
+        
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || "Error de acceso");
+
+        // 🟢 ÉXITO: Guardamos el pase VIP en el navegador
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("nombreUsuario", data.nombre);
+        
+        mostrarDashboard();
+    } catch (error) {
+        errorMsg.innerText = error.message;
+        errorMsg.style.display = "block";
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Ingresar al Panel";
+    }
+}
+
+function cerrarSesion() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("nombreUsuario");
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("detalles-evento").style.display = "none";
+    mostrarLogin();
 }
 
 function mostrarDashboard() {
     document.getElementById("login-box").style.display = "none";
+    document.getElementById("registro-box").style.display = "none";
     document.getElementById("dashboard").style.display = "block";
     cargarEventos();
+}
+
+// ==========================================
+// 2. GESTIÓN DE EVENTOS (CON SEGURIDAD)
+// ==========================================
+// Función auxiliar para obtener el token en cada petición
+function getHeaders() {
+    return {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+    };
 }
 
 function obtenerEnlaceInvitacion(id) {
@@ -34,7 +127,14 @@ function obtenerEnlaceInvitacion(id) {
 
 async function cargarEventos() {
     try {
-        const res = await fetch(`${API_URL}/api/eventos`);
+        // 🟢 Ahora enviamos el token al servidor para que nos dé solo NUESTROS eventos
+        const res = await fetch(`${API_URL}/api/eventos`, { headers: getHeaders() });
+        
+        if (res.status === 401) {
+            alert("Tu sesión expiró. Inicia sesión de nuevo.");
+            cerrarSesion();
+            return;
+        }
         if (!res.ok) throw new Error("Fallo al obtener eventos");
         
         const eventos = await res.json();
@@ -42,7 +142,7 @@ async function cargarEventos() {
         contenedor.innerHTML = ""; 
 
         if (eventos.length === 0) {
-            contenedor.innerHTML = "<p style='text-align:center;'>Aún no hay eventos creados.</p>";
+            contenedor.innerHTML = "<p style='text-align:center;'>Aún no tienes eventos. ¡Crea el primero en el panel de creación!</p>";
             return;
         }
 
@@ -70,9 +170,11 @@ async function cargarEventos() {
         });
     } catch (error) {
         console.error("Error:", error);
-        document.getElementById("eventos").innerHTML = "<p style='color:red;'>Error al conectar con el servidor.</p>";
+        document.getElementById("eventos").innerHTML = "<p style='color:red;'>Error al conectar. ¿Iniciaste sesión?</p>";
     }
 }
+
+// ... (Las funciones verDetalles, responderSolicitudAdmin, exportarCSV y PDF se quedan IGUAL, ya que las peticiones del admin usan las rutas públicas/compartidas para leer los datos del evento).
 
 async function verDetalles(id, titulo) {
     document.getElementById("detalles-evento").style.display = "block";
@@ -81,19 +183,17 @@ async function verDetalles(id, titulo) {
     generarQR(id);
 
     try {
-        // Pedimos los datos del evento al servidor
         const resEvento = await fetch(`${API_URL}/api/eventos/${id}`);
         const evento = await resEvento.json();
 
-        // 🟢 1. Renderizar Lista Principal
-        const asistentes = evento.asistentes || [];
+        const resAsistentes = await fetch(`${API_URL}/api/eventos/${id}/asistentes`);
+        const asistentes = await resAsistentes.json();
         asistentesGlobal = asistentes;
 
         document.getElementById("total").innerText = asistentes.length;
         const lista = document.getElementById("lista");
         lista.innerHTML = "";
 
-        // Si hay VIPs, pintamos primero los botones para enviar invitación
         if (evento.listaInvitados && evento.listaInvitados.length > 0) {
             lista.innerHTML = `<li style="background: #eef8f1; padding: 10px; font-weight: bold;">👑 Enlaces VIP (Para Enviar):</li>`;
             
@@ -125,7 +225,6 @@ async function verDetalles(id, titulo) {
             lista.innerHTML += `<li style="margin-top:15px; background: #f0f0f0; padding: 10px; font-weight: bold;">✅ Asistentes Confirmados:</li>`;
         }
 
-        // Pintamos a todos los que ya confirmaron (VIPs y Acompañantes)
         if (asistentes.length === 0) {
             lista.innerHTML += "<li style='color:#888; justify-content:center;'>Nadie ha confirmado aún.</li>";
         } else {
@@ -140,7 +239,6 @@ async function verDetalles(id, titulo) {
             });
         }
 
-        // 🟢 2. Renderizar Sala de Espera (Pendientes)
         const seccionPendientes = document.getElementById("seccion-pendientes-admin");
         const listaPendientes = document.getElementById("lista-pendientes");
         listaPendientes.innerHTML = "";
@@ -157,7 +255,6 @@ async function verDetalles(id, titulo) {
                 
                 let textoExtra = solicitud.acompanantes.length > 0 ? `<br><small style="color:#888;">+ ${solicitud.acompanantes.length} acompañante(s)</small>` : "";
                 
-                // Usamos el token del cliente para aprovechar la ruta que ya existe en el backend
                 li.innerHTML = `
                     <div><strong>${solicitud.nombrePrincipal}</strong> ${textoExtra}</div>
                     <div style="display: flex; gap: 5px;">
@@ -176,36 +273,21 @@ async function verDetalles(id, titulo) {
     }
 }
 
-// 🟢 NUEVO: Función para aprobar/rechazar desde el Admin
 async function responderSolicitudAdmin(token, eventoId, tituloEvento, index, accion) {
     if (!confirm(`¿Confirmas que deseas ${accion} a este invitado?`)) return;
-
     try {
         const res = await fetch(`${API_URL}/api/eventos/compartido/${token}/${accion}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ index })
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ index })
         });
-
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Fallo al procesar la solicitud");
-
-        // Si fue exitoso, recargamos solo los detalles de este evento
         verDetalles(eventoId, tituloEvento);
-
-    } catch (error) {
-        alert(error.message);
-    }
+    } catch (error) { alert(error.message); }
 }
 
-// ==========================================
-// FUNCIONES DE COMPARTIR Y EXPORTAR
-// ==========================================
 function copiarLink(id) {
     const link = obtenerEnlaceInvitacion(id);
-    navigator.clipboard.writeText(link)
-        .then(() => alert("¡Enlace copiado al portapapeles!"))
-        .catch(() => alert("Error al copiar el enlace"));
+    navigator.clipboard.writeText(link).then(() => alert("¡Enlace copiado al portapapeles!")).catch(() => alert("Error al copiar el enlace"));
 }
 
 function compartirWhatsApp(id, titulo) {
@@ -218,52 +300,32 @@ function compartirWhatsApp(id, titulo) {
 function generarQR(id) {
     const link = obtenerEnlaceInvitacion(id);
     const canvas = document.getElementById("qr");
-
     QRCode.toCanvas(canvas, link, { width: 180, margin: 1 }, function (error) {
         if (error) console.error("Error generando QR", error);
     });
 }
 
 function exportarCSV() {
-    if (asistentesGlobal.length === 0) {
-        alert("No hay asistentes para exportar.");
-        return;
-    }
-
+    if (asistentesGlobal.length === 0) { alert("No hay asistentes para exportar."); return; }
     let csv = "Nombre del Asistente\n";
-    asistentesGlobal.forEach(nombre => {
-        csv += `"${nombre}"\n`; 
-    });
-
+    asistentesGlobal.forEach(nombre => { csv += `"${nombre}"\n`; });
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url;
-    a.download = "lista_asistentes.csv"; 
-    a.click();
+    a.href = url; a.download = "lista_asistentes.csv"; a.click();
     URL.revokeObjectURL(url);
 }
 
 function exportarPDF() {
-    if (asistentesGlobal.length === 0) {
-        alert("No hay asistentes para exportar.");
-        return;
-    }
-
+    if (asistentesGlobal.length === 0) { alert("No hay asistentes para exportar."); return; }
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-
     doc.setFontSize(18);
     const titulo = document.getElementById("evento-titulo-detalle").innerText;
     doc.text(titulo, 10, 15);
-    
     doc.setFontSize(12);
     doc.text(`Total de confirmados: ${asistentesGlobal.length}`, 10, 25);
-
     doc.setFontSize(10);
-    asistentesGlobal.forEach((nombre, index) => {
-        doc.text(`${index + 1}. ${nombre}`, 10, 40 + (index * 8));
-    });
-
+    asistentesGlobal.forEach((nombre, index) => { doc.text(`${index + 1}. ${nombre}`, 10, 40 + (index * 8)); });
     doc.save("asistentes_evento.pdf");
 }

@@ -44,11 +44,19 @@ async function crearEvento() {
             listaInvitados: arregloInvitados
         };
 
+        // ... dentro de js/app.js
+
         const res = await fetch(`${API_URL}/api/eventos`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            // 🟢 NUEVO: Añadimos el Authorization Header con el token guardado
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem("token")}`
+            },
             body: JSON.stringify(data)
         });
+
+// ... el resto sigue igual
 
         if (!res.ok) throw new Error("Fallo en el servidor al guardar el evento");
 
