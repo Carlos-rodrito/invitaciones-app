@@ -1,5 +1,16 @@
-// 🌍 Centralizamos la URL del backend igual que en los otros archivos
 const API_URL = "https://invitaciones-backend.onrender.com";
+
+// Función auxiliar para obtener el token de seguridad
+function getAuthHeaders(esFormData = false) {
+    const headers = {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
+    };
+    // Si NO es formData (es decir, es JSON), agregamos el Content-Type
+    if (!esFormData) {
+        headers["Content-Type"] = "application/json";
+    }
+    return headers;
+}
 
 async function crearEvento() {
     const btnCrear = document.getElementById("btn-crear"); 
@@ -8,29 +19,25 @@ async function crearEvento() {
     const fechaInput = document.getElementById("fecha");
     const lugarInput = document.getElementById("lugar");
 
-    // 🛑 1. Validación básica
     if (!tituloInput.value.trim() || !fechaInput.value || !lugarInput.value.trim()) {
         alert("Por favor, completa al menos el título, la fecha y el lugar del evento.");
         return;
     }
 
-    // 🟢 Extraemos y procesamos la lista VIP y el límite de asistentes
     const limiteInput = document.getElementById("limite").value;
     const listaVipInput = document.getElementById("lista-vip").value;
     
-    // Convertimos el texto del textarea en un arreglo, quitando líneas vacías
     const arregloInvitados = listaVipInput
         .split('\n')
         .map(nombre => nombre.trim())
         .filter(nombre => nombre !== ""); 
 
-    // ⏳ Feedback visual: Bloquear el botón y mostrar el aviso
     btnCrear.disabled = true;
-    btnCrear.innerText = "Procesando...";
+    btnCrear.innerText = "Comprimiendo y subiendo... ⏳";
     mensajeServidor.style.display = "block"; 
 
     try {
-        // 👇 Subir arreglo de imágenes (Carrusel)
+        // 👇 Ahora esto subirá fotos ultra ligeras
         const imagenesUrls = await subirImagenes();
 
         const data = {
@@ -39,30 +46,24 @@ async function crearEvento() {
             lugar: lugarInput.value.trim(),
             tipo: document.getElementById("tipo").value,
             imagenes: imagenesUrls,
-            // Agregamos las nuevas reglas
             limiteAsistentes: limiteInput ? parseInt(limiteInput) : null,
             listaInvitados: arregloInvitados
         };
 
-        // ... dentro de js/app.js
-
         const res = await fetch(`${API_URL}/api/eventos`, {
             method: "POST",
-            // 🟢 NUEVO: Añadimos el Authorization Header con el token guardado
-            headers: { 
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${localStorage.getItem("token")}`
-            },
+            // 🟢 Usamos el token guardado en tu navegador
+            headers: getAuthHeaders(false),
             body: JSON.stringify(data)
         });
 
-// ... el resto sigue igual
-
-        if (!res.ok) throw new Error("Fallo en el servidor al guardar el evento");
+        if (!res.ok) {
+            if (res.status === 401) throw new Error("Tu sesión expiró. Ve al panel de Admin e inicia sesión de nuevo.");
+            throw new Error("Fallo en el servidor al guardar el evento");
+        }
 
         const evento = await res.json();
 
-        // 🔗 Generar enlace dinámico
         const rutaBase = window.location.pathname.replace("index.html", "");
         const base = window.location.origin + rutaBase;
         const link = `${base}invitacion.html?id=${evento._id}`;
@@ -72,18 +73,17 @@ async function crearEvento() {
             <span style="color: #4CAF50; font-weight: bold;">¡Evento creado con éxito! 🎉</span><br><br>
             <a href="${link}" target="_blank" style="word-break: break-all;">${link}</a><br>
             <button onclick="navigator.clipboard.writeText('${link}').then(()=>alert('¡Enlace copiado!'))" 
-                    style="margin-top: 10px; width: auto; padding: 8px 15px;">
+                    style="margin-top: 10px; width: auto; padding: 8px 15px; background: #222; color: white;">
                 Copiar Enlace
             </button>
         `;
 
         limpiarFormulario();
 
-    } catch (error) { // ¡ESTA ES LA PARTE QUE FALTABA!
+    } catch (error) { 
         console.error("Error al crear evento:", error);
-        alert("Hubo un error creando el evento. Revisa tu conexión a internet.");
+        alert(error.message);
     } finally {
-        // Restaurar el botón siempre
         btnCrear.disabled = false;
         btnCrear.innerText = "Generar Invitación";
         mensajeServidor.style.display = "none"; 
@@ -96,20 +96,47 @@ async function subirImagenes() {
     if (!fileInput.files.length) return []; 
 
     const formData = new FormData();
+    
+    // 🟢 CONFIGURACIÓN DE COMPRESIÓN (Ultra optimizado)
+    const opcionesCompresion = {
+        maxSizeMB: 0.5,          // Máximo 500 KB por foto (ideal para móviles)
+        maxWidthOrHeight: 1280,  // Resolución máxima de HD
+        useWebWorker: true       // Evita que la página se congele mientras comprime
+    };
+
+    // 🟢 BUCLE: Comprimir cada foto antes de meterla al paquete
     for (let i = 0; i < fileInput.files.length; i++) {
-        formData.append("imagenes", fileInput.files[i]);
+        let archivoOriginal = fileInput.files[i];
+        
+        try {
+            console.log(`Comprimiendo: ${archivoOriginal.name} (${(archivoOriginal.size / 1024 / 1024).toFixed(2)} MB)`);
+            
+            // ¡La magia ocurre aquí!
+            let archivoComprimido = await imageCompression(archivoOriginal, opcionesCompresion);
+            
+            console.log(`Comprimido a: ${(archivoComprimido.size / 1024 / 1024).toFixed(2)} MB`);
+            
+            // Lo añadimos al paquete para enviar
+            formData.append("imagenes", archivoComprimido, archivoOriginal.name);
+            
+        } catch (error) {
+            console.warn("No se pudo comprimir la foto, se enviará la original", error);
+            // Plan B: si algo falla en el celular del usuario, manda la original
+            formData.append("imagenes", archivoOriginal);
+        }
     }
 
     try {
         const res = await fetch(`${API_URL}/upload`, {
             method: "POST",
+            // 🟢 Enviamos el Token. (No enviamos Content-Type porque FormData lo pone solo).
+            headers: getAuthHeaders(true),
             body: formData
         });
 
-        // 🟢 EL ANTÍDOTO: Revisamos si Render nos devolvió un HTML en lugar de JSON
         const contentType = res.headers.get("content-type");
         if (contentType && contentType.includes("text/html")) {
-            throw new Error(`Render bloqueó la petición (Código ${res.status}). Probablemente la imagen es demasiado pesada para el servidor gratuito.`);
+            throw new Error(`Render bloqueó la petición (Código ${res.status}). Probablemente la foto original es demasiado grande y el celular no pudo comprimirla.`);
         }
 
         const data = await res.json();
@@ -134,7 +161,6 @@ function limpiarFormulario() {
     document.getElementById("imagenes").value = "";
     document.getElementById("tipo").selectedIndex = 0;
     
-    // Limpiamos también los nuevos campos
     const limiteInput = document.getElementById("limite");
     if (limiteInput) limiteInput.value = "";
     
