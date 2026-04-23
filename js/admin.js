@@ -50,7 +50,6 @@ async function cargarEventos() {
             const div = document.createElement("div");
             div.className = "evento-item";
 
-            // 🟢 Lógica para crear el enlace del panel de cliente
             const rutaBase = window.location.pathname.replace("admin.html", "");
             const base = window.location.origin + rutaBase;
             const linkCliente = ev.tokenCliente ? `${base}cliente.html?token=${ev.tokenCliente}` : "#";
@@ -61,8 +60,8 @@ async function cargarEventos() {
                     <span>📅 ${ev.fecha || "Fecha sin definir"}</span>
                 </div>
                 <div class="evento-acciones">
-                    <button onclick="verDetalles('${ev._id}', '${ev.titulo}')">Ver Asistentes / QR</button>
-                    <button onclick="copiarLink('${ev._id}')">Copiar Enlace</button>
+                    <button onclick="verDetalles('${ev._id}', '${ev.titulo}')" style="background:#222; color:white;">Administrar</button>
+                    <button onclick="copiarLink('${ev._id}')">Link Gral.</button>
                     <button onclick="compartirWhatsApp('${ev._id}', '${ev.titulo}')" style="background:#25D366; color:white;">WhatsApp</button>
                     ${ev.tokenCliente ? `<button onclick="navigator.clipboard.writeText('${linkCliente}').then(()=>alert('¡Enlace del cliente copiado!'))" style="background:#007BFF; color:white;">Link Cliente</button>` : ''}
                 </div>
@@ -77,24 +76,26 @@ async function cargarEventos() {
 
 async function verDetalles(id, titulo) {
     document.getElementById("detalles-evento").style.display = "block";
-    document.getElementById("evento-titulo-detalle").innerText = `Detalles: ${titulo}`;
+    document.getElementById("evento-titulo-detalle").innerText = `Gestionando: ${titulo}`;
     
     generarQR(id);
 
     try {
+        // Pedimos los datos del evento al servidor
         const resEvento = await fetch(`${API_URL}/api/eventos/${id}`);
         const evento = await resEvento.json();
 
-        const resAsistentes = await fetch(`${API_URL}/api/eventos/${id}/asistentes`);
-        const asistentes = await resAsistentes.json();
+        // 🟢 1. Renderizar Lista Principal
+        const asistentes = evento.asistentes || [];
         asistentesGlobal = asistentes;
 
         document.getElementById("total").innerText = asistentes.length;
         const lista = document.getElementById("lista");
         lista.innerHTML = "";
 
+        // Si hay VIPs, pintamos primero los botones para enviar invitación
         if (evento.listaInvitados && evento.listaInvitados.length > 0) {
-            lista.innerHTML = `<li style="background: #eef8f1; padding: 10px; font-weight: bold; border-radius: 5px;">👑 Enlaces VIP Personalizados:</li>`;
+            lista.innerHTML = `<li style="background: #eef8f1; padding: 10px; font-weight: bold;">👑 Enlaces VIP (Para Enviar):</li>`;
             
             evento.listaInvitados.forEach(invitado => {
                 const yaConfirmo = asistentes.some(a => a.toLowerCase() === invitado.toLowerCase());
@@ -107,40 +108,99 @@ async function verDetalles(id, titulo) {
                 const base = window.location.origin + rutaBase;
                 const linkVip = `${base}invitacion.html?id=${id}&invitado=${encodeURIComponent(invitado)}`;
                 
-                const mensajeWa = `¡Hola *${invitado}*! 🎉\nEstás invitado a *${titulo}*.\n\nEste es tu pase personal e intransferible. Confirma tu asistencia aquí 👇\n${linkVip}`;
+                const mensajeWa = `¡Hola *${invitado}*! 🎉\nEstás invitado a *${titulo}*.\n\nEste es tu pase personal. Confirma aquí 👇\n${linkVip}`;
                 const urlWa = `https://wa.me/?text=${encodeURIComponent(mensajeWa)}`;
 
                 li.innerHTML = `
                     <span>
                         ${yaConfirmo ? "✅" : "⏳"} <strong>${invitado}</strong>
                     </span>
-                    <button onclick="window.open('${urlWa}', '_blank')" style="background:#25D366; color:white; padding: 5px 10px; margin:0; font-size: 12px; width: auto;">
+                    <button onclick="window.open('${urlWa}', '_blank')" style="background:#25D366; color:white; padding: 5px 10px; margin:0; font-size: 12px; width: auto; border:none; border-radius:4px; cursor:pointer;">
                         Enviar Link
                     </button>
                 `;
                 lista.appendChild(li);
             });
 
-            lista.innerHTML += `<li style="margin-top:15px; font-weight: bold;">Asistentes extra (Si los hay):</li>`;
+            lista.innerHTML += `<li style="margin-top:15px; background: #f0f0f0; padding: 10px; font-weight: bold;">✅ Asistentes Confirmados:</li>`;
         }
 
+        // Pintamos a todos los que ya confirmaron (VIPs y Acompañantes)
         if (asistentes.length === 0) {
-            lista.innerHTML += "<li style='color:#888;'>Nadie ha confirmado aún.</li>";
+            lista.innerHTML += "<li style='color:#888; justify-content:center;'>Nadie ha confirmado aún.</li>";
         } else {
             asistentes.forEach(nombre => {
-                const esVip = evento.listaInvitados && evento.listaInvitados.some(v => v.toLowerCase() === nombre.toLowerCase());
-                if (!esVip) {
-                    const li = document.createElement("li");
-                    li.innerText = `👤 ${nombre}`;
-                    lista.appendChild(li);
+                const li = document.createElement("li");
+                if (nombre.includes("(Acompañante")) {
+                    li.innerHTML = `<span style="color:#888; margin-left: 15px;">↳</span> <span style="font-size: 13px; color: #555;">${nombre}</span>`;
+                } else {
+                    li.innerHTML = `✅ <strong>${nombre}</strong>`;
                 }
+                lista.appendChild(li);
             });
         }
+
+        // 🟢 2. Renderizar Sala de Espera (Pendientes)
+        const seccionPendientes = document.getElementById("seccion-pendientes-admin");
+        const listaPendientes = document.getElementById("lista-pendientes");
+        listaPendientes.innerHTML = "";
+
+        if (evento.pendientes && evento.pendientes.length > 0) {
+            seccionPendientes.style.display = "block";
+            
+            evento.pendientes.forEach((solicitud, index) => {
+                const li = document.createElement("li");
+                li.style.display = "flex";
+                li.style.justifyContent = "space-between";
+                li.style.alignItems = "center";
+                li.style.flexWrap = "wrap";
+                
+                let textoExtra = solicitud.acompanantes.length > 0 ? `<br><small style="color:#888;">+ ${solicitud.acompanantes.length} acompañante(s)</small>` : "";
+                
+                // Usamos el token del cliente para aprovechar la ruta que ya existe en el backend
+                li.innerHTML = `
+                    <div><strong>${solicitud.nombrePrincipal}</strong> ${textoExtra}</div>
+                    <div style="display: flex; gap: 5px;">
+                        <button onclick="responderSolicitudAdmin('${evento.tokenCliente}', '${id}', '${titulo}', ${index}, 'aprobar')" style="background: #4CAF50; color:white; padding: 5px 10px; margin:0; font-size: 12px; width: auto; border:none; border-radius:4px; cursor:pointer;">Aprobar</button>
+                        <button onclick="responderSolicitudAdmin('${evento.tokenCliente}', '${id}', '${titulo}', ${index}, 'rechazar')" style="background: #f44336; color:white; padding: 5px 10px; margin:0; font-size: 12px; width: auto; border:none; border-radius:4px; cursor:pointer;">Rechazar</button>
+                    </div>
+                `;
+                listaPendientes.appendChild(li);
+            });
+        } else {
+            seccionPendientes.style.display = "none";
+        }
+
     } catch (error) {
         console.error("Error cargando detalles", error);
     }
 }
 
+// 🟢 NUEVO: Función para aprobar/rechazar desde el Admin
+async function responderSolicitudAdmin(token, eventoId, tituloEvento, index, accion) {
+    if (!confirm(`¿Confirmas que deseas ${accion} a este invitado?`)) return;
+
+    try {
+        const res = await fetch(`${API_URL}/api/eventos/compartido/${token}/${accion}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ index })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Fallo al procesar la solicitud");
+
+        // Si fue exitoso, recargamos solo los detalles de este evento
+        verDetalles(eventoId, tituloEvento);
+
+    } catch (error) {
+        alert(error.message);
+    }
+}
+
+// ==========================================
+// FUNCIONES DE COMPARTIR Y EXPORTAR
+// ==========================================
 function copiarLink(id) {
     const link = obtenerEnlaceInvitacion(id);
     navigator.clipboard.writeText(link)

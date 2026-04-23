@@ -7,9 +7,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/panel.css">
     <style>
-        /* Estilos extra específicos para el panel admin */
         .admin-container {
-            max-width: 800px; /* Un poco más ancho para las listas */
+            max-width: 800px; 
         }
         
         .evento-item {
@@ -50,7 +49,6 @@
             color: white;
         }
 
-        /* Ocultar elementos al inicio */
         #dashboard { display: none; }
         
         #detalles-evento {
@@ -68,7 +66,7 @@
         .asistentes-list {
             list-style: none;
             padding: 0;
-            max-height: 250px;
+            max-height: 350px;
             overflow-y: auto;
         }
 
@@ -109,16 +107,23 @@
                 <div id="qr-container">
                     <canvas id="qr"></canvas>
                 </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 25px;">
+                    <button onclick="exportarCSV()">Exportar Excel (.CSV)</button>
+                    <button onclick="exportarPDF()" style="background:#d32f2f; color:white;">Exportar PDF</button>
+                </div>
             </div>
 
             <div style="flex: 2; min-width: 250px;">
-                <h3 style="font-size: 16px;">Lista de Asistentes (<span id="total">0</span>)</h3>
-                <ul id="lista" class="asistentes-list"></ul>
+                <h3 style="font-size: 16px;">Panel de Asistentes (<span id="total">0</span> Confirmados)</h3>
                 
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button onclick="exportarCSV()">Exportar .CSV</button>
-                    <button onclick="exportarPDF()">Exportar PDF</button>
+                <ul id="lista" class="asistentes-list" style="background: white; border: 1px solid #eee; border-radius: 8px;"></ul>
+                
+                <div id="seccion-pendientes-admin" style="display: none; margin-top: 20px; background: #fff3cd; border: 1px dashed #ffeeba; padding: 15px; border-radius: 8px;">
+                    <h3 style="font-size: 15px; color: #856404; margin-top: 0;">⏳ Lista de Espera (Por Aprobar)</h3>
+                    <ul id="lista-pendientes" class="asistentes-list" style="background: white; border: 1px solid #eee; border-radius: 5px;"></ul>
                 </div>
+
             </div>
         </div>
     </div>
