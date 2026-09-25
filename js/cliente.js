@@ -43,6 +43,26 @@ async function cargarDatosCliente() {
             document.getElementById("stat-disponibles").innerText = "Libre";
         }
 
+        // 🟢 NUEVO: RENDERIZAR BUZÓN DE MENSAJES
+        if (evento.mensajes && evento.mensajes.length > 0) {
+            document.getElementById("seccion-mensajes").style.display = "block";
+            const contenedorMensajes = document.getElementById("lista-mensajes");
+            contenedorMensajes.innerHTML = "";
+            
+            evento.mensajes.forEach(msg => {
+                const div = document.createElement("div");
+                div.className = "mensaje-card";
+                div.innerHTML = `
+                    <p class="mensaje-texto">"${msg.texto}"</p>
+                    <p class="mensaje-autor">- ${msg.nombre}</p>
+                `;
+                contenedorMensajes.appendChild(div);
+            });
+        } else {
+            document.getElementById("seccion-mensajes").style.display = "none";
+        }
+
+        // RENDERIZAR LISTA DE CONFIRMADOS
         const lista = document.getElementById("lista-clientes");
         lista.innerHTML = "";
         
@@ -60,7 +80,7 @@ async function cargarDatosCliente() {
             });
         }
 
-        // 🟢 RENDERIZAR PENDIENTES CON BOTÓN DE WHATSAPP
+        // RENDERIZAR PENDIENTES CON BOTÓN DE WHATSAPP
         if (evento.pendientes && evento.pendientes.length > 0) {
             document.getElementById("seccion-pendientes").style.display = "block";
             const listaPendientes = document.getElementById("lista-pendientes");
@@ -75,13 +95,16 @@ async function cargarDatosCliente() {
                 
                 let textoExtra = solicitud.acompanantes.length > 0 ? `<br><small style="color:#b45309;">+ ${solicitud.acompanantes.length} acompañante(s)</small>` : "";
                 
+                // Mostrar si dejaron un mensaje mientras estaban en espera
+                let alertaMensaje = solicitud.mensaje ? `<br><small style="color:#0284c7; font-style:italic;">💬 Dejó un mensaje</small>` : "";
+
                 let telLimpio = "";
                 let botonAvisarHTML = "";
                 
                 if (solicitud.telefono) {
                     telLimpio = solicitud.telefono.replace(/\D/g, ''); 
                     let textoAsistentesMensaje = solicitud.acompanantes.length > 0 ? ` (Tú y tus ${solicitud.acompanantes.length} acompañantes)` : "";
-                    const mensajeAprobado = `¡Hola ${solicitud.nombrePrincipal}! 🎉\n\nNos alegra confirmarte que tu solicitud para asistir a *${tituloDelEvento}* ha sido APROBADA${textoAsistentesMensaje}.\n\n¡Te esperamos!`;
+                    const mensajeAprobado = `¡Hola ${solicitud.nombrePrincipal}! 🎉\n\nMe alegra confirmarte que tu solicitud para asistir a *${tituloDelEvento}* ha sido APROBADA${textoAsistentesMensaje}.\n\n¡Te espero!`;
                     const urlConfirmacionWa = `https://wa.me/${telLimpio}?text=${encodeURIComponent(mensajeAprobado)}`;
                     
                     botonAvisarHTML = `<button onclick="window.open('${urlConfirmacionWa}', '_blank')" style="background: #25D366; color:white; padding: 6px 12px; margin:0; font-size: 12px; border:none; border-radius:6px; cursor:pointer;">💬 Avisar</button>`;
@@ -92,6 +115,7 @@ async function cargarDatosCliente() {
                         <strong style="color: #92400e;">${solicitud.nombrePrincipal}</strong> 
                         <span style="font-size:11px; color:#666;">${solicitud.telefono ? '📱 ' + solicitud.telefono : ''}</span>
                         ${textoExtra}
+                        ${alertaMensaje}
                     </div>
                     <div style="display: flex; gap: 5px;">
                         <button onclick="responderSolicitud(${index}, 'aprobar')" style="background: #10b981; color:white; padding: 6px 12px; margin:0; font-size: 12px; border:none; border-radius:6px; cursor:pointer;">Aprobar</button>
@@ -127,10 +151,11 @@ async function responderSolicitud(index, accion) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Fallo al procesar la solicitud");
 
+        // Al recargar, si lo aprobamos, su mensaje aparecerá en el buzón automáticamente
         cargarDatosCliente();
         
         if(accion === 'aprobar'){
-            alert("¡Invitado aprobado! Si dejó su número, recuerda enviarle un mensaje para avisarle.");
+            alert("¡Invitado aprobado! Si dejó un número, recuerda enviarle un mensaje para avisarle.");
         }
 
     } catch (error) {
