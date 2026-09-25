@@ -45,8 +45,9 @@ const EventoSchema = new mongoose.Schema({
     limiteAsistentes: Number, 
     listaInvitados: [String],
     tokenCliente: String,
-    telefonoOrganizador: String, // Para WhatsApp del cliente
-    mensajes: [{ nombre: String, texto: String }], // Buzón de graduación
+    telefonoOrganizador: String, 
+    observaciones: String, // 🟢 NUEVO: Campo para notas (Uber, vestimenta, etc.)
+    mensajes: [{ nombre: String, texto: String }], 
     pendientes: [{ 
         nombrePrincipal: String, 
         acompanantes: [String],
@@ -161,7 +162,6 @@ app.get("/api/eventos/compartido/:token", async (req, res) => {
     }
 });
 
-// 🟢 RUTA PARA CAMBIAR TEMA DE COLORES
 app.put("/api/eventos/:id/tema", verificarToken, async (req, res) => {
     try {
         const evento = await Evento.findOneAndUpdate(
