@@ -118,6 +118,7 @@ async function crearEvento() {
     const tituloInput = document.getElementById("titulo");
     const fechaInput = document.getElementById("fecha");
     const lugarInput = document.getElementById("lugar");
+    const telOrgInput = document.getElementById("tel-organizador") ? document.getElementById("tel-organizador").value.trim() : "";
 
     if (!tituloInput.value.trim() || !fechaInput.value || !lugarInput.value.trim()) {
         alert("Por favor, completa al menos el título, la fecha y el lugar del evento.");
@@ -135,6 +136,7 @@ async function crearEvento() {
     try {
         const imagenesUrls = await subirImagenes();
 
+
         const data = {
             titulo: tituloInput.value.trim(),
             fecha: fechaInput.value,
@@ -142,7 +144,8 @@ async function crearEvento() {
             tipo: document.getElementById("tipo").value,
             imagenes: imagenesUrls,
             limiteAsistentes: limiteInput ? parseInt(limiteInput) : null,
-            listaInvitados: arregloInvitados
+            listaInvitados: arregloInvitados,
+            telefonoOrganizador: telOrgInput // 🟢 NUEVO: Enviamos el número
         };
 
         const res = await fetch(`${API_URL}/api/eventos`, {
