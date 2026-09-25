@@ -241,6 +241,7 @@ function limpiarFormulario() {
     document.getElementById("lugar").value = "";
     document.getElementById("imagenes").value = "";
     document.getElementById("tipo").selectedIndex = 0;
+    document.getElementById("tel-organizador").value = "";
     
     const limiteInput = document.getElementById("limite");
     if (limiteInput) limiteInput.value = "";
