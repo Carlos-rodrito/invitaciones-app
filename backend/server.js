@@ -123,6 +123,22 @@ app.post("/api/auth/login", async (req, res) => {
 // ==========================================
 app.get("/", (req, res) => res.json({ estado: "Online - Sistema de Invitaciones" }));
 
+// 🟢 NUEVA RUTA: Actualizar el tema del evento
+app.put("/api/eventos/:id/tema", verificarToken, async (req, res) => {
+    try {
+        const evento = await Evento.findOneAndUpdate(
+            { _id: req.params.id, creadorId: req.usuario.id }, // Aseguramos que el evento sea de este Admin
+            { tipo: req.body.tipo }, // Cambiamos el tema
+            { new: true }
+        );
+        if (!evento) return res.status(404).json({ error: "Evento no encontrado o no autorizado" });
+        res.json({ ok: true, mensaje: "Tema actualizado con éxito" });
+    } catch (error) {
+        res.status(500).json({ error: "Error al actualizar el tema" });
+    }
+});
+
+
 app.get("/api/eventos", verificarToken, async (req, res) => {
     try {
         const eventos = await Evento.find({ creadorId: req.usuario.id }).sort({ _id: -1 });
