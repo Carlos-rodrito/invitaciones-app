@@ -82,6 +82,19 @@
                     <canvas id="qr"></canvas>
                 </div>
                 
+                <!-- 🟢 SECCIÓN PARA CAMBIAR EL TEMA -->
+                <div style="margin-top: 20px; padding: 15px; background: var(--bg-body); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 5px;">CAMBIAR DISEÑO:</label>
+                    <select id="cambiar-tema-select" style="width: 100%; margin-bottom: 10px; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color);">
+                        <option value="boda">Boda</option>
+                        <option value="quince">15 Años</option>
+                        <option value="cumple">Cumpleaños</option>
+                        <option value="corporativo">Corporativo</option>
+                        <option value="graduacion">Graduación (Rosa/Oscuro)</option>
+                    </select>
+                    <button onclick="guardarNuevoTema()" class="btn-primary" style="padding: 8px; font-size: 13px;">Guardar Diseño</button>
+                </div>
+
                 <div class="acciones-descarga">
                     <button onclick="exportarCSV()" class="btn-outline">Descargar Excel (.CSV)</button>
                     <button onclick="exportarPDF()" class="btn-danger">Descargar PDF</button>
