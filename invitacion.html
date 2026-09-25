@@ -25,12 +25,17 @@
 
     <hr>
 
+    <!-- Formulario de Ingreso -->
     <div id="area-ingreso">
         <input type="text" id="nombre" placeholder="Tu nombre y apellido">
+        
+        <!-- 🟢 NUEVO: Cajita para el mensaje de felicitación -->
+        <textarea id="mensaje-invitado" placeholder="Déjale un mensaje de felicitación al graduado (Opcional)" rows="3" style="width: 100%; padding: 14px 15px; margin-top: 12px; border-radius: 10px; border: 1px solid #d1d5db; font-family: 'Poppins', sans-serif; resize: vertical; font-size: 14px; background: #f8fafc; outline: none;"></textarea>
     </div>
     
     <h2 id="saludo-vip" class="saludo-vip" style="display: none;"></h2>
 
+    <!-- Contenedor para acompañantes dinámicos -->
     <div id="contenedor-acompanantes"></div>
     
     <button id="btn-add-acompanante" class="btn-secundario" onclick="agregarAcompanante()">+ Añadir acompañante</button>
