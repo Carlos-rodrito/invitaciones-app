@@ -1,8 +1,5 @@
 const API_URL = "https://invitaciones-backend.onrender.com";
 
-// ==========================================
-// 1. SISTEMA DE SESIÓN
-// ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -109,9 +106,6 @@ function getAuthHeaders(esFormData = false) {
     return headers;
 }
 
-// ==========================================
-// 2. LÓGICA DE CREACIÓN DE EVENTOS Y COMPRESIÓN
-// ==========================================
 async function crearEvento() {
     const btnCrear = document.getElementById("btn-crear"); 
     const mensajeServidor = document.getElementById("mensaje-servidor"); 
@@ -127,9 +121,10 @@ async function crearEvento() {
     const limiteInput = document.getElementById("limite").value;
     const listaVipInput = document.getElementById("lista-vip").value;
     const arregloInvitados = listaVipInput.split('\n').map(nombre => nombre.trim()).filter(nombre => nombre !== ""); 
-    
-    // 🟢 Capturar el número de WhatsApp del organizador
     const telOrgInput = document.getElementById("tel-organizador") ? document.getElementById("tel-organizador").value.trim() : "";
+    
+    // 🟢 NUEVO: Capturar el texto de observaciones
+    const observacionesInput = document.getElementById("observaciones") ? document.getElementById("observaciones").value.trim() : "";
 
     btnCrear.disabled = true;
     btnCrear.innerText = "Comprimiendo y subiendo... ⏳";
@@ -146,7 +141,8 @@ async function crearEvento() {
             imagenes: imagenesUrls,
             limiteAsistentes: limiteInput ? parseInt(limiteInput) : null,
             listaInvitados: arregloInvitados,
-            telefonoOrganizador: telOrgInput // Enviamos el número
+            telefonoOrganizador: telOrgInput,
+            observaciones: observacionesInput // 🟢 Lo enviamos a la BD
         };
 
         const res = await fetch(`${API_URL}/api/eventos`, {
@@ -247,12 +243,9 @@ function limpiarFormulario() {
     document.getElementById("imagenes").value = "";
     document.getElementById("tipo").selectedIndex = 0;
     
-    const limiteInput = document.getElementById("limite");
-    if (limiteInput) limiteInput.value = "";
-    
-    const listaVipInput = document.getElementById("lista-vip");
-    if (listaVipInput) listaVipInput.value = "";
-    
-    const telOrgInput = document.getElementById("tel-organizador");
-    if (telOrgInput) telOrgInput.value = "";
+    if (document.getElementById("limite")) document.getElementById("limite").value = "";
+    if (document.getElementById("lista-vip")) document.getElementById("lista-vip").value = "";
+    if (document.getElementById("tel-organizador")) document.getElementById("tel-organizador").value = "";
+    // 🟢 NUEVO: Limpiar la cajita de observaciones
+    if (document.getElementById("observaciones")) document.getElementById("observaciones").value = "";
 }
