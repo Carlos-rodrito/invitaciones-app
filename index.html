@@ -3,142 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creador de Eventos PRO</title>
+    <title>SaaS - Creador de Invitaciones</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/panel.css">
 </head>
 <body>
 
-<div id="auth-container" class="container auth-box">
-    
-    <div id="login-box">
+<!-- CONTENEDOR DE LOGIN / REGISTRO -->
+<div id="auth-container">
+    <div class="container auth-box" id="login-box">
         <div class="brand-header">
-            <h2>Portal de Organizadores</h2>
-            <p>Inicia sesión para gestionar tus eventos</p>
+            <h2>Bienvenido</h2>
+            <p>Inicia sesión para crear eventos</p>
         </div>
-        
         <div class="form-group">
             <label>Correo Electrónico</label>
             <input type="email" id="login-email" placeholder="ejemplo@correo.com">
         </div>
         <div class="form-group">
             <label>Contraseña</label>
-            <input type="password" id="login-pass" placeholder="Tu contraseña secreta">
+            <input type="password" id="login-pass" placeholder="Ingresa tu contraseña">
         </div>
-        
-        <button onclick="intentarLogin()" id="btn-login" class="btn-primary">Ingresar al Sistema</button>
+        <button onclick="intentarLogin()" id="btn-login" class="btn-primary">Ingresar</button>
         <p id="login-error" class="error-msg"></p>
-        <p class="auth-switch" onclick="mostrarRegistro()">¿Eres nuevo? Solicita una cuenta aquí</p>
+        <p class="auth-switch" onclick="mostrarRegistro()">¿No tienes cuenta? Crear una aquí</p>
     </div>
 
-    <div id="registro-box" style="display: none;">
+    <div class="container auth-box" id="registro-box" style="display: none;">
         <div class="brand-header">
             <h2>Crear Cuenta</h2>
-            <p>Únete a nuestra plataforma corporativa</p>
+            <p>Regístrate como Organizador</p>
         </div>
-
         <div class="form-group">
-            <label>Nombre de Agencia o Titular</label>
-            <input type="text" id="reg-nombre" placeholder="Ej. Eventos Corporativos S.A.">
+            <label>Tu Nombre</label>
+            <input type="text" id="reg-nombre" placeholder="Ej. Agencia de Eventos">
         </div>
         <div class="form-group">
             <label>Correo Electrónico</label>
             <input type="email" id="reg-email" placeholder="ejemplo@correo.com">
         </div>
         <div class="form-group">
-            <label>Crear Contraseña</label>
-            <input type="password" id="reg-pass" placeholder="Usa una contraseña segura">
+            <label>Contraseña</label>
+            <input type="password" id="reg-pass" placeholder="Crea una contraseña segura">
         </div>
-        
-        <button onclick="intentarRegistro()" id="btn-registro" class="btn-primary">Registrar Cuenta</button>
-        <p class="auth-switch" onclick="mostrarLogin()">Ya tengo una cuenta. Volver al inicio</p>
+        <button onclick="intentarRegistro()" id="btn-registro" class="btn-primary">Crear Cuenta</button>
+        <p class="auth-switch" onclick="mostrarLogin()">Volver a Iniciar Sesión</p>
     </div>
 </div>
 
+<!-- CONTENEDOR PRINCIPAL DE LA APP (CREAR EVENTOS) -->
 <div id="app-container" style="display: none;">
-    
     <div class="top-bar">
         <div class="user-info">
-            <span class="avatar">👤</span>
+            <span class="avatar">✨</span>
             <div>
-                <small>Bienvenido,</small><br>
-                <strong id="nombre-usuario-display">Organizador</strong>
+                <strong style="font-size: 16px;">Hola, <span id="nombre-usuario-display">Organizador</span></strong>
+                <br><small><a href="admin.html" class="link-crear">Ir a mi Panel de Control -></a></small>
             </div>
         </div>
         <div class="top-actions">
-            <a href="admin.html" class="btn-outline">Ir al Dashboard</a>
             <button onclick="cerrarSesionApp()" class="btn-danger">Cerrar Sesión</button>
         </div>
     </div>
 
-    <div class="container app-box">
-        <h1 class="section-title">Generador de Evento</h1>
-        <hr class="separador">
-
-        <div class="form-group">
-            <label for="titulo">Título del Evento *</label>
-            <input type="text" id="titulo" placeholder="Ej. Lanzamiento de Producto 2026" required>
-        </div>
-
-        <div class="grid-2-col">
-            <div class="form-group">
-                <label for="fecha">Fecha y Hora *</label>
-                <input type="datetime-local" id="fecha" required>
-            </div>
-            <div class="form-group">
-                <label for="limite">Límite de Cupos</label>
-                <input type="number" id="limite" placeholder="Ej. 150 (Dejar en blanco si es libre)" min="1">
-            </div>
-        </div>
-        <div class="form-group">
-                <label>WhatsApp del Cliente / Organizador (Para recibir confirmaciones)</label>
-                <input type="text" id="tel-organizador" placeholder="Ej. 50244556677 (Con código de país, sin el +)">
-        </div>
-
-
-        <div class="form-group">
-            <label for="lugar">Lugar / Dirección *</label>
-            <input type="text" id="lugar" placeholder="Ej. Centro de Convenciones, Salón A" required>
+    <div class="container" style="margin-top: 20px;">
+        <div class="brand-header">
+            <h2>Crear Nueva Invitación</h2>
+            <p>Configura los detalles del evento</p>
         </div>
 
         <div class="form-group">
-            <label for="lista-vip">Lista de Invitados Exclusivos (Opcional)</label>
-            <span class="help-text">Coloca un nombre por línea. Quienes no estén en esta lista pasarán a sala de espera.</span>
-            <textarea id="lista-vip" placeholder="Lic. Roberto Gómez&#10;Ing. Mariana Silva&#10;Directiva General" rows="4"></textarea>
+            <label>Diseño / Tema del Evento</label>
+            <select id="tipo">
+                <option value="boda">Boda (Tonos Arena / Elegante)</option>
+                <option value="quince">15 Años (Tonos Rosados)</option>
+                <option value="cumple">Cumpleaños (Tonos Azules)</option>
+                <option value="corporativo">Corporativo (Azul Profesional)</option>
+                <option value="graduacion">Graduación (Rosa Elegante / Oscuro)</option>
+            </select>
         </div>
 
-        <div class="grid-2-col">
-            <div class="form-group">
-                <label for="imagenes">Imágenes (Galería) *</label>
-                <input type="file" id="imagenes" accept="image/*" multiple required>
-            </div>
-            <div class="form-group">
-                <label for="tipo">Plantilla / Tema de Invitación</label>
-                <select id="tipo">
-                    <option value="boda">Boda (Tonos Arena / Elegante)</option>
-                    <option value="quince">15 Años (Tonos Rosados)</option>
-                    <option value="cumple">Cumpleaños (Tonos Azules)</option>
-                    <option value="corporativo">Corporativo (Azul Profesional)</option>
-                    <!-- 🟢 NUEVO TEMA -->
-                    <option value="graduacion">Graduación (Rosa Elegante / Oscuro)</option>
-                </select>
-
-            </div>
+        <div class="form-group">
+            <label>Título del Evento</label>
+            <input type="text" id="titulo" placeholder="Ej. Boda de Ana & Carlos">
         </div>
-
-        <button id="btn-crear" onclick="crearEvento()" class="btn-primary btn-large">Generar Enlace Seguro</button>
         
-        <div id="mensaje-servidor" class="alert-info">
-            ⏳ Procesando y encriptando datos en la nube...
+        <div class="form-group">
+            <label>Fecha y Hora</label>
+            <input type="datetime-local" id="fecha">
         </div>
 
-        <div id="link" class="result-box">
-            <p style="color: #64748b; font-size: 14px; margin: 0;">Tu enlace se mostrará aquí al terminar.</p>
+        <div class="form-group">
+            <label>Lugar</label>
+            <input type="text" id="lugar" placeholder="Ej. Salón Lirios, Zona 10">
         </div>
+
+        <!-- 🟢 EL CAMPO DE WHATSAPP -->
+        <div class="form-group">
+            <label>WhatsApp del Cliente (Recibirá confirmaciones)</label>
+            <input type="text" id="tel-organizador" placeholder="Ej. 50244556677 (Código de país sin +)">
+        </div>
+
+        <div class="form-group">
+            <label>Límite de Asistentes Totales (Opcional)</label>
+            <input type="number" id="limite" placeholder="Ej. 150">
+        </div>
+
+        <div class="form-group">
+            <label>Lista VIP (Un nombre por línea - Opcional)</label>
+            <textarea id="lista-vip" rows="4" placeholder="Juan Perez&#10;Maria Lopez"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Imágenes (Hasta 5 fotos)</label>
+            <input type="file" id="imagenes" multiple accept="image/*">
+        </div>
+
+        <button id="btn-crear" class="btn-primary" onclick="crearEvento()">Generar Invitación</button>
+        <p id="mensaje-servidor" class="loading-text" style="display: none; text-align: center; margin-top: 10px;">Subiendo imágenes y creando evento, por favor espera...</p>
+        
+        <div id="link" style="margin-top: 20px; text-align: center;"></div>
     </div>
 </div>
 
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
+<!-- Librería de compresión de imágenes -->
+<script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
 <script src="js/app.js"></script>
+
 </body>
 </html>
