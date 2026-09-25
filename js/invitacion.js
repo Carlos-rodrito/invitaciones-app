@@ -124,7 +124,6 @@ async function confirmar(event) {
     const nombrePrincipal = invitadoVIP ? invitadoVIP : inputNombre.value.trim(); 
     const tituloEvento = document.getElementById("titulo").innerText;
     
-    // 🟢 NUEVO: Capturar el mensaje escrito por el invitado
     const inputMensaje = document.getElementById("mensaje-invitado");
     const mensajeTexto = inputMensaje ? inputMensaje.value.trim() : "";
 
@@ -140,7 +139,6 @@ async function confirmar(event) {
         if (input.value.trim() !== "") acompanantesExtra.push(input.value.trim());
     });
 
-    // Cambiar estado del botón
     const btnConfirmar = event.target;
     btnConfirmar.innerText = "Procesando...";
     btnConfirmar.disabled = true;
@@ -149,7 +147,6 @@ async function confirmar(event) {
         const res = await fetch(`${API_URL}/api/eventos/${id}/rsvp`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            // 🟢 NUEVO: Enviamos el mensaje al servidor
             body: JSON.stringify({ 
                 nombrePrincipal: nombrePrincipal, 
                 acompanantes: acompanantesExtra,
@@ -160,7 +157,6 @@ async function confirmar(event) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Fallo en servidor");
 
-        // Ocultar elementos del formulario
         if (invitadoVIP) document.getElementById("saludo-vip").style.display = "none";
         else document.getElementById("area-ingreso").style.display = "none";
 
@@ -176,7 +172,10 @@ async function confirmar(event) {
             let textoExtras = acompanantesExtra.length > 0 ? ` junto con ${acompanantesExtra.length} acompañante(s)` : "";
             mensajeWa = `¡Hola! Acabo de confirmar mi asistencia a *${tituloEvento}*${textoExtras}. Mi nombre es ${nombrePrincipal}. ¡Ahí nos vemos! 🎉`;
         }
-        const urlWa = `https://wa.me/?text=${encodeURIComponent(mensajeWa)}`;
+        
+        // 🟢 NUEVO: Lógica dinámica de WhatsApp
+        let baseWa = telefonoDelCliente ? `https://wa.me/${telefonoDelCliente}` : `https://wa.me/`;
+        const urlWa = `${baseWa}?text=${encodeURIComponent(mensajeWa)}`;
 
         // Mensaje de Éxito en pantalla
         const mensajeExito = document.createElement("div");
