@@ -1,7 +1,7 @@
 const API_URL = "https://invitaciones-backend.onrender.com";
 
 // ==========================================
-// 1. SISTEMA DE SESIÓN EN LA APP PRINCIPAL
+// 1. SISTEMA DE SESIÓN
 // ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     const token = localStorage.getItem("token");
@@ -62,7 +62,7 @@ async function intentarRegistro() {
         alert(error.message);
     } finally {
         btn.disabled = false;
-        btn.innerText = "Registrarse";
+        btn.innerText = "Crear Cuenta";
     }
 }
 
@@ -118,7 +118,6 @@ async function crearEvento() {
     const tituloInput = document.getElementById("titulo");
     const fechaInput = document.getElementById("fecha");
     const lugarInput = document.getElementById("lugar");
-    const telOrgInput = document.getElementById("tel-organizador") ? document.getElementById("tel-organizador").value.trim() : "";
 
     if (!tituloInput.value.trim() || !fechaInput.value || !lugarInput.value.trim()) {
         alert("Por favor, completa al menos el título, la fecha y el lugar del evento.");
@@ -128,6 +127,9 @@ async function crearEvento() {
     const limiteInput = document.getElementById("limite").value;
     const listaVipInput = document.getElementById("lista-vip").value;
     const arregloInvitados = listaVipInput.split('\n').map(nombre => nombre.trim()).filter(nombre => nombre !== ""); 
+    
+    // 🟢 Capturar el número de WhatsApp del organizador
+    const telOrgInput = document.getElementById("tel-organizador") ? document.getElementById("tel-organizador").value.trim() : "";
 
     btnCrear.disabled = true;
     btnCrear.innerText = "Comprimiendo y subiendo... ⏳";
@@ -135,7 +137,6 @@ async function crearEvento() {
 
     try {
         const imagenesUrls = await subirImagenes();
-
 
         const data = {
             titulo: tituloInput.value.trim(),
@@ -145,7 +146,7 @@ async function crearEvento() {
             imagenes: imagenesUrls,
             limiteAsistentes: limiteInput ? parseInt(limiteInput) : null,
             listaInvitados: arregloInvitados,
-            telefonoOrganizador: telOrgInput // 🟢 NUEVO: Enviamos el número
+            telefonoOrganizador: telOrgInput // Enviamos el número
         };
 
         const res = await fetch(`${API_URL}/api/eventos`, {
@@ -170,12 +171,16 @@ async function crearEvento() {
 
         const contenedorLink = document.getElementById("link");
         contenedorLink.innerHTML = `
-            <span style="color: #4CAF50; font-weight: bold;">¡Evento creado con éxito! 🎉</span><br><br>
-            <a href="${link}" target="_blank" style="word-break: break-all;">${link}</a><br>
-            <button onclick="navigator.clipboard.writeText('${link}').then(()=>alert('¡Enlace copiado!'))" 
-                    style="margin-top: 10px; width: auto; padding: 8px 15px; background: #222; color: white;">
-                Copiar Enlace
-            </button>
+            <div style="background: #ecfdf5; border: 1px solid #10b981; padding: 15px; border-radius: 8px;">
+                <span style="color: #047857; font-weight: bold; font-size: 16px;">¡Evento creado con éxito! 🎉</span><br><br>
+                <a href="${link}" target="_blank" style="word-break: break-all; color: #2563eb;">${link}</a><br>
+                <button onclick="navigator.clipboard.writeText('${link}').then(()=>alert('¡Enlace copiado!'))" 
+                        style="margin-top: 15px; width: 100%; padding: 10px; background: #0f172a; color: white; border-radius: 6px; border: none; font-weight: 500;">
+                    Copiar Enlace General
+                </button>
+                <br><br>
+                <a href="admin.html" style="color: #b45309; font-weight: 500; text-decoration: underline;">Ir a gestionar este evento</a>
+            </div>
         `;
 
         limpiarFormulario();
@@ -221,7 +226,7 @@ async function subirImagenes() {
 
         const contentType = res.headers.get("content-type");
         if (contentType && contentType.includes("text/html")) {
-            throw new Error(`Render bloqueó la petición (Código ${res.status}). La imagen es muy pesada.`);
+            throw new Error(`Render bloqueó la petición. La imagen es muy pesada.`);
         }
 
         const data = await res.json();
@@ -241,11 +246,13 @@ function limpiarFormulario() {
     document.getElementById("lugar").value = "";
     document.getElementById("imagenes").value = "";
     document.getElementById("tipo").selectedIndex = 0;
-    document.getElementById("tel-organizador").value = "";
     
     const limiteInput = document.getElementById("limite");
     if (limiteInput) limiteInput.value = "";
     
     const listaVipInput = document.getElementById("lista-vip");
     if (listaVipInput) listaVipInput.value = "";
+    
+    const telOrgInput = document.getElementById("tel-organizador");
+    if (telOrgInput) telOrgInput.value = "";
 }
