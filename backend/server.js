@@ -52,13 +52,13 @@ const EventoSchema = new mongoose.Schema({
     limiteAsistentes: Number, 
     listaInvitados: [String],
     tokenCliente: String,
-    // 🟢 NUEVO: Guardamos los mensajes de felicitación
+    telefonoOrganizador: String, // 🟢 NUEVO: Aquí guardaremos el número del cliente
     mensajes: [{ nombre: String, texto: String }], 
     pendientes: [{ 
         nombrePrincipal: String, 
         acompanantes: [String],
         telefono: String,
-        mensaje: String // Mensaje temporal mientras se aprueba
+        mensaje: String
     }],
     creadorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }
 });
