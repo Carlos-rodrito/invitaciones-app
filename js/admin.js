@@ -174,11 +174,20 @@ async function verDetalles(id, titulo) {
     document.getElementById("detalles-evento").style.display = "block";
     document.getElementById("evento-titulo-detalle").innerText = `Gestionando: ${titulo}`;
     
+    // 🟢 Guardamos el ID del evento actual de forma global para usarlo al guardar el tema
+    document.getElementById("detalles-evento").dataset.eventoId = id; 
+    
     generarQR(id);
 
     try {
         const resEvento = await fetch(`${API_URL}/api/eventos/${id}`);
         const evento = await resEvento.json();
+
+        // 🟢 Mostramos el tema actual en el selector de diseños
+        if(evento.tipo) {
+            const selectTema = document.getElementById("cambiar-tema-select");
+            if(selectTema) selectTema.value = evento.tipo;
+        }
 
         const resAsistentes = await fetch(`${API_URL}/api/eventos/${id}/asistentes`);
         const asistentes = await resAsistentes.json();
@@ -188,7 +197,6 @@ async function verDetalles(id, titulo) {
         const lista = document.getElementById("lista");
         lista.innerHTML = "";
 
-        // 1. VIPs a los que no se les ha enviado invitación
         if (evento.listaInvitados && evento.listaInvitados.length > 0) {
             lista.innerHTML = `<li style="background: #f8fafc; padding: 10px; font-weight: 600; color: #1e293b;">👑 Enlaces VIP (Para Enviar):</li>`;
             
@@ -220,7 +228,6 @@ async function verDetalles(id, titulo) {
             lista.innerHTML += `<li style="margin-top:15px; background: #f8fafc; padding: 10px; font-weight: 600; color: #1e293b;">✅ Asistentes Confirmados:</li>`;
         }
 
-        // 2. Asistentes Confirmados Totales
         if (asistentes.length === 0) {
             lista.innerHTML += "<li style='color:#64748b; justify-content:center;'>Nadie ha confirmado aún.</li>";
         } else {
@@ -231,12 +238,10 @@ async function verDetalles(id, titulo) {
                 li.style.alignItems = "center";
 
                 if (nombre.includes("(Acompañante")) {
-                    // Es acompañante, lo mostramos con sangría y sin botón
                     li.innerHTML = `
                         <span><span style="color:#94a3b8; margin-left: 15px;">↳</span> <span style="font-size: 13px; color: #475569;">${nombre}</span></span>
                     `;
                 } else {
-                    // 🟢 ES TITULAR: Calculamos sus acompañantes y creamos el botón de WhatsApp
                     const numAcompanantes = asistentes.filter(a => a.includes(`(Acompañante de ${nombre})`)).length;
                     const textoAcom = numAcompanantes > 0 ? ` (junto con tus ${numAcompanantes} acompañantes)` : "";
                     
@@ -252,7 +257,6 @@ async function verDetalles(id, titulo) {
             });
         }
 
-        // 3. Sala de Espera (Aprobar, Rechazar y Enviar Confirmación por WA)
         const seccionPendientes = document.getElementById("seccion-pendientes-admin");
         const listaPendientes = document.getElementById("lista-pendientes");
         listaPendientes.innerHTML = "";
@@ -268,6 +272,7 @@ async function verDetalles(id, titulo) {
                 li.style.flexWrap = "wrap";
                 
                 let textoExtra = solicitud.acompanantes.length > 0 ? `<br><small style="color:#b45309;">+ ${solicitud.acompanantes.length} acompañante(s)</small>` : "";
+                let alertaMensaje = solicitud.mensaje ? `<br><small style="color:#0284c7; font-style:italic;">💬 Dejó un mensaje</small>` : "";
                 
                 let telLimpio = "";
                 let botonAvisarHTML = "";
@@ -286,6 +291,7 @@ async function verDetalles(id, titulo) {
                         <strong style="color: #92400e;">${solicitud.nombrePrincipal}</strong> 
                         <span style="font-size:11px; color:#666;">${solicitud.telefono ? '📱 ' + solicitud.telefono : ''}</span>
                         ${textoExtra}
+                        ${alertaMensaje}
                     </div>
                     <div style="display: flex; gap: 5px;">
                         <button onclick="responderSolicitudAdmin('${evento.tokenCliente}', '${id}', '${titulo}', ${index}, 'aprobar')" style="background: #10b981; color:white; padding: 6px 12px; margin:0; font-size: 12px; border:none; border-radius:6px; cursor:pointer;">Aprobar</button>
@@ -364,4 +370,27 @@ function exportarPDF() {
     doc.setFontSize(10);
     asistentesGlobal.forEach((nombre, index) => { doc.text(`${index + 1}. ${nombre}`, 10, 40 + (index * 8)); });
     doc.save("asistentes_evento.pdf");
+}
+
+// 🟢 NUEVA FUNCIÓN: Cambiar el tema desde el Admin
+async function guardarNuevoTema() {
+    const id = document.getElementById("detalles-evento").dataset.eventoId;
+    const nuevoTema = document.getElementById("cambiar-tema-select").value;
+    
+    if (!id) return alert("Error: No hay evento seleccionado.");
+
+    try {
+        const res = await fetch(`${API_URL}/api/eventos/${id}/tema`, {
+            method: "PUT",
+            headers: getHeaders(),
+            body: JSON.stringify({ tipo: nuevoTema })
+        });
+        
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Fallo al cambiar el tema");
+        
+        alert("¡Diseño actualizado exitosamente! Los invitados ya verán los nuevos colores.");
+    } catch (error) {
+        alert(error.message);
+    }
 }
