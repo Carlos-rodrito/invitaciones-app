@@ -13,6 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Configuración de Cloudinary
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.API_KEY,
@@ -29,7 +30,7 @@ mongoose.connect(process.env.MONGO_URI)
     .catch(err => console.error("🔴 Error conectando a MongoDB:", err));
 
 // ==========================================
-// 1. MODELO DE USUARIO
+// 1. MODELO DE USUARIO (ADMIN)
 // ==========================================
 const UsuarioSchema = new mongoose.Schema({
     nombre: { type: String, required: true },
@@ -39,7 +40,7 @@ const UsuarioSchema = new mongoose.Schema({
 const Usuario = mongoose.model("Usuario", UsuarioSchema);
 
 // ==========================================
-// 2. MODELO DE EVENTOS (Con Teléfono en Pendientes)
+// 2. MODELO DE EVENTOS (ACTUALIZADO PARA MENSAJES)
 // ==========================================
 const EventoSchema = new mongoose.Schema({
     titulo: String,
@@ -51,10 +52,13 @@ const EventoSchema = new mongoose.Schema({
     limiteAsistentes: Number, 
     listaInvitados: [String],
     tokenCliente: String,
+    // 🟢 NUEVO: Guardamos los mensajes de felicitación
+    mensajes: [{ nombre: String, texto: String }], 
     pendientes: [{ 
         nombrePrincipal: String, 
         acompanantes: [String],
-        telefono: String // 🟢 AGREGADO PARA WHATSAPP
+        telefono: String,
+        mensaje: String // Mensaje temporal mientras se aprueba
     }],
     creadorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }
 });
@@ -78,12 +82,11 @@ const verificarToken = (req, res, next) => {
 };
 
 // ==========================================
-// 4. RUTAS DE AUTENTICACIÓN (LOGIN Y REGISTRO)
+// 4. RUTAS DE AUTENTICACIÓN
 // ==========================================
 app.post("/api/auth/registro", async (req, res) => {
     try {
         const { nombre, email, password } = req.body;
-        
         const existe = await Usuario.findOne({ email });
         if (existe) return res.status(400).json({ error: "El correo ya está registrado." });
 
@@ -102,7 +105,6 @@ app.post("/api/auth/registro", async (req, res) => {
 app.post("/api/auth/login", async (req, res) => {
     try {
         const { email, password } = req.body;
-        
         const usuario = await Usuario.findOne({ email });
         if (!usuario) return res.status(400).json({ error: "Correo o contraseña incorrectos." });
 
@@ -110,7 +112,6 @@ app.post("/api/auth/login", async (req, res) => {
         if (!passCorrecta) return res.status(400).json({ error: "Correo o contraseña incorrectos." });
 
         const token = jwt.sign({ id: usuario._id, nombre: usuario.nombre }, process.env.JWT_SECRET, { expiresIn: "7d" });
-        
         res.json({ token, nombre: usuario.nombre });
     } catch (error) {
         res.status(500).json({ error: "Error en el servidor al iniciar sesión." });
@@ -120,7 +121,7 @@ app.post("/api/auth/login", async (req, res) => {
 // ==========================================
 // 5. RUTAS DE EVENTOS
 // ==========================================
-app.get("/", (req, res) => res.json({ estado: "Online" }));
+app.get("/", (req, res) => res.json({ estado: "Online - Sistema de Invitaciones" }));
 
 app.get("/api/eventos", verificarToken, async (req, res) => {
     try {
@@ -137,6 +138,7 @@ app.post("/api/eventos", verificarToken, async (req, res) => {
         const evento = new Evento({
             ...req.body,
             asistentes: [],
+            mensajes: [], // Iniciamos el buzón vacío
             pendientes: [],
             tokenCliente: tokenGenerado,
             creadorId: req.usuario.id 
@@ -166,6 +168,7 @@ app.get("/api/eventos/compartido/:token", async (req, res) => {
             titulo: evento.titulo, fecha: evento.fecha, lugar: evento.lugar,
             asistentes: evento.asistentes, pendientes: evento.pendientes,
             limiteAsistentes: evento.limiteAsistentes,
+            mensajes: evento.mensajes, // 🟢 Enviamos los mensajes al dashboard del graduado
             totalLista: evento.listaInvitados ? evento.listaInvitados.length : 0
         });
     } catch (error) {
@@ -173,7 +176,7 @@ app.get("/api/eventos/compartido/:token", async (req, res) => {
     }
 });
 
-// 🟢 RUTA RSVP ACTUALIZADA PARA CAPTURAR EL TELÉFONO
+// 🟢 RUTA RSVP ACTUALIZADA PARA CAPTURAR EL MENSAJE
 app.post("/api/eventos/:id/rsvp", async (req, res) => {
     try {
         const evento = await Evento.findById(req.params.id);
@@ -181,7 +184,8 @@ app.post("/api/eventos/:id/rsvp", async (req, res) => {
 
         const nombrePrincipal = req.body.nombrePrincipal ? req.body.nombrePrincipal.trim() : "";
         const acompanantes = req.body.acompanantes || []; 
-        const telefono = req.body.telefono ? req.body.telefono.trim() : ""; // 🟢 CAPTURAMOS EL NÚMERO
+        const telefono = req.body.telefono ? req.body.telefono.trim() : ""; 
+        const mensajeTexto = req.body.mensaje ? req.body.mensaje.trim() : ""; // 🟢 Capturamos el mensaje
 
         if (!nombrePrincipal) return res.status(400).json({ error: "El nombre principal es requerido" });
 
@@ -199,8 +203,8 @@ app.post("/api/eventos/:id/rsvp", async (req, res) => {
                 const yaPendiente = evento.pendientes.some(p => p.nombrePrincipal.toLowerCase() === nombrePrincipal.toLowerCase());
                 if (yaPendiente) return res.status(400).json({ error: "Ya enviaste una solicitud. Está en revisión." });
 
-                // 🟢 GUARDAMOS EL NÚMERO EN LA SALA DE ESPERA
-                evento.pendientes.push({ nombrePrincipal, acompanantes, telefono });
+                // Guardamos en lista de espera (incluyendo su mensaje)
+                evento.pendientes.push({ nombrePrincipal, acompanantes, telefono, mensaje: mensajeTexto });
                 await evento.save();
                 return res.json({ ok: true, waitlist: true, mensaje: "Aprobación pendiente" });
             }
@@ -211,10 +215,15 @@ app.post("/api/eventos/:id/rsvp", async (req, res) => {
             return res.status(403).json({ error: `El evento está lleno. Quedan ${cuposRestantes} cupos.` });
         }
 
+        // Si pasó directo (VIP o sin lista), guardamos asistencia y el mensaje al buzón
         evento.asistentes.push(nombrePrincipal);
         acompanantes.forEach(nombreExtra => {
             if (nombreExtra.trim()) evento.asistentes.push(`${nombreExtra.trim()} (Acompañante de ${nombrePrincipal})`);
         });
+
+        if (mensajeTexto) {
+            evento.mensajes.push({ nombre: nombrePrincipal, texto: mensajeTexto });
+        }
 
         await evento.save();
         res.json({ ok: true, waitlist: false, mensaje: "Asistencia confirmada" });
@@ -223,6 +232,7 @@ app.post("/api/eventos/:id/rsvp", async (req, res) => {
     }
 });
 
+// 🟢 CUANDO APRUEBAS A ALGUIEN, SU MENSAJE PASA AL BUZÓN OFICIAL
 app.post("/api/eventos/compartido/:token/aprobar", async (req, res) => {
     try {
         const evento = await Evento.findOne({ tokenCliente: req.params.token });
@@ -241,6 +251,10 @@ app.post("/api/eventos/compartido/:token/aprobar", async (req, res) => {
         solicitud.acompanantes.forEach(extra => {
             evento.asistentes.push(`${extra} (Acompañante de ${solicitud.nombrePrincipal})`);
         });
+
+        if (solicitud.mensaje) {
+            evento.mensajes.push({ nombre: solicitud.nombrePrincipal, texto: solicitud.mensaje });
+        }
 
         evento.pendientes.splice(index, 1);
         await evento.save();
