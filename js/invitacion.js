@@ -119,10 +119,14 @@ async function confirmar(event) {
     const inputNombre = document.getElementById("nombre");
     const nombrePrincipal = invitadoVIP ? invitadoVIP : inputNombre.value.trim(); 
     const tituloEvento = document.getElementById("titulo").innerText;
+    
+    // 🟢 NUEVO: Capturar el mensaje escrito por el invitado
+    const inputMensaje = document.getElementById("mensaje-invitado");
+    const mensajeTexto = inputMensaje ? inputMensaje.value.trim() : "";
 
     if (!nombrePrincipal) {
         alert("Ingresa tu nombre antes de confirmar asistencia.");
-        inputNombre.focus(); 
+        if(inputNombre) inputNombre.focus(); 
         return;
     }
 
@@ -141,7 +145,12 @@ async function confirmar(event) {
         const res = await fetch(`${API_URL}/api/eventos/${id}/rsvp`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ nombrePrincipal: nombrePrincipal, acompanantes: acompanantesExtra })
+            // 🟢 NUEVO: Enviamos el mensaje al servidor
+            body: JSON.stringify({ 
+                nombrePrincipal: nombrePrincipal, 
+                acompanantes: acompanantesExtra,
+                mensaje: mensajeTexto 
+            })
         });
         
         const data = await res.json();
@@ -155,7 +164,7 @@ async function confirmar(event) {
         document.getElementById("btn-add-acompanante").style.display = "none";
         btnConfirmar.style.display = "none";
 
-        // 🟢 PREPARAR EL MENSAJE DE WHATSAPP
+        // Preparar WhatsApp
         let mensajeWa = "";
         if (data.waitlist) {
             mensajeWa = `¡Hola! Acabo de enviar mi solicitud de asistencia para *${tituloEvento}*. Mi nombre es ${nombrePrincipal}. Quedo a la espera de tu confirmación. ⏳`;
@@ -165,7 +174,7 @@ async function confirmar(event) {
         }
         const urlWa = `https://wa.me/?text=${encodeURIComponent(mensajeWa)}`;
 
-        // 🟢 RENDERIZAR MENSAJE FINAL Y BOTÓN
+        // Mensaje de Éxito en pantalla
         const mensajeExito = document.createElement("div");
         mensajeExito.style.textAlign = "center";
         mensajeExito.style.marginTop = "10px";
@@ -183,6 +192,7 @@ async function confirmar(event) {
             mensajeExito.innerHTML = `
                 <h2 style="color: #10b981; font-family: 'Playfair Display', serif; margin-bottom: 10px;">¡Asistencia Confirmada! 🎉</h2>
                 <p style="color: #444; font-size: 14px;">Te esperamos en el evento, <strong>${nombrePrincipal}</strong>.</p>
+                ${mensajeTexto ? '<p style="color: #4CAF50; font-size: 13px; margin-top: 5px;"><i>Tu mensaje fue enviado con éxito.</i></p>' : ''}
                 ${textoAcompanantes}
                 <a href="${urlWa}" target="_blank" class="btn-whatsapp">
                     <span style="font-size: 18px; margin-right: 8px;">💬</span> Avisar al organizador
