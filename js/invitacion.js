@@ -5,6 +5,8 @@ const invitadoVIP = params.get("invitado");
 
 let intervaloContador; 
 let imagenActual = 0; 
+let telefonoDelCliente = ""; // 🟢 Guardará el número
+
 
 function formatearFecha(fechaIso) {
     if (!fechaIso) return "Fecha por definir";
