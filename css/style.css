@@ -206,7 +206,29 @@ hr {
 body.boda { background: linear-gradient(135deg, #fdfcfb, #e2d1c3); }
 body.quince { background: linear-gradient(135deg, #ffdde1, #ee9ca7); }
 body.cumple { background: linear-gradient(135deg, #a1c4fd, #c2e9fb); }
-body.corporativo { background: linear-gradient(135deg, #e0eafc, #cfdef3); } 
+body.corporativo { background: linear-gradient(135deg, #e0eafc, #cfdef3); }
+
+/* =========================================
+   NUEVO TEMA: GRADUACIÓN
+========================================= */
+body.graduacion { 
+    background: linear-gradient(135deg, #ffe5f0, #fdcae1, #c594aa); 
+}
+body.graduacion .card h1 {
+    color: #050505; /* Oscuro profundo para el título */
+}
+body.graduacion .info, body.graduacion .mensaje-texto {
+    color: #131313; /* Texto general oscuro */
+}
+body.graduacion .btn-principal {
+    background: #131313;
+    color: #ffe5f0;
+}
+body.graduacion .btn-principal:hover {
+    background: #c594aa;
+    color: #131313;
+}
+
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(15px);}
