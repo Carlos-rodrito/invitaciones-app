@@ -6,22 +6,62 @@
     <title>Panel del Cliente - Seguimiento</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/panel.css">
+    <style>
+        /* Estilos exclusivos para el Buzón de Mensajes */
+        .grid-mensajes {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .mensaje-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #3b82f6; /* Línea azul decorativa */
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: transform 0.2s;
+        }
+        .mensaje-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        .mensaje-texto {
+            font-size: 14px;
+            color: #334155;
+            font-style: italic;
+            margin-bottom: 10px;
+            margin-top: 0;
+            line-height: 1.5;
+        }
+        .mensaje-autor {
+            font-size: 13px;
+            color: #0f172a;
+            font-weight: 600;
+            margin: 0;
+            text-align: right;
+        }
+    </style>
 </head>
 <body>
 
 <div class="container app-box">
     
+    <!-- PANTALLA DE CARGA -->
     <div id="pantalla-carga" class="brand-header" style="padding: 40px 0;">
         <h2>⏳ Conectando con tu evento...</h2>
         <p>Sincronizando base de datos</p>
     </div>
 
+    <!-- PANTALLA DE ERROR -->
     <div id="mensaje-error" class="error-msg" style="padding: 40px 20px; display: none;">
         <h2 style="margin-bottom: 10px;">Acceso Denegado</h2>
         <p>Este enlace es inválido o el evento ya no existe.</p>
         <p style="margin-top: 10px;"><small>Contacta al administrador de tu evento si crees que es un error.</small></p>
     </div>
 
+    <!-- PANEL DEL CLIENTE (Oculto al inicio) -->
     <div id="panel-cliente" style="display: none;">
         
         <div class="brand-header">
@@ -29,6 +69,7 @@
             <p id="detalles-fecha-lugar"></p>
         </div>
 
+        <!-- Tarjetas de Estadísticas -->
         <div class="stats-grid">
             <div class="stat-box">
                 <span class="stat-num text-success" id="stat-confirmados">0</span>
@@ -44,9 +85,18 @@
             </div>
         </div>
 
-        <h3 class="section-title" style="margin-top: 30px;">Lista de Confirmados</h3>
+        <!-- BUZÓN DE MENSAJES (NUEVO) -->
+        <div id="seccion-mensajes" style="display: none; margin-top: 35px;">
+            <h3 class="section-title">💌 Mensajes de Felicitación</h3>
+            <div id="lista-mensajes" class="grid-mensajes">
+                <!-- Aquí JS insertará las tarjetitas -->
+            </div>
+        </div>
+
+        <h3 class="section-title" style="margin-top: 35px;">Lista de Confirmados</h3>
         <ul id="lista-clientes" class="asistentes-list"></ul>
 
+        <!-- Zona de Aprobación de Solicitudes -->
         <div id="seccion-pendientes" class="panel-pendientes" style="display: none;">
             <h3 class="pendientes-titulo">⏳ Solicitudes de Asistencia</h3>
             <p style="font-size: 13px; color: #b45309; margin-top: -5px; margin-bottom: 15px;">Estas personas no estaban en tu lista VIP. Aprueba o rechaza su ingreso.</p>
@@ -55,6 +105,7 @@
 
         <hr class="separador">
 
+        <!-- Botones de Acción -->
         <div class="grid-2-col">
             <button onclick="exportarClienteCSV()" class="btn-outline">Descargar Excel (.csv)</button>
             <button onclick="exportarClientePDF()" class="btn-danger">Descargar PDF</button>
