@@ -34,6 +34,8 @@ async function cargarEvento() {
         document.getElementById("titulo").innerText = evento.titulo || "Evento";
         document.getElementById("fecha").innerText = formatearFecha(evento.fecha);
         document.getElementById("lugar").innerText = evento.lugar || "";
+        // 🟢 NUEVO: Guardamos el número si el admin lo configuró
+        telefonoDelCliente = evento.telefonoOrganizador || ""; 
 
         if (evento.imagenes && evento.imagenes.length > 0) {
             const contenedorCarrusel = document.getElementById("carrusel");
