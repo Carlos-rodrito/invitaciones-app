@@ -13,7 +13,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Configuración de Cloudinary
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.API_KEY,
@@ -29,9 +28,6 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("🟢 MongoDB conectado exitosamente"))
     .catch(err => console.error("🔴 Error conectando a MongoDB:", err));
 
-// ==========================================
-// 1. MODELO DE USUARIO (ADMIN)
-// ==========================================
 const UsuarioSchema = new mongoose.Schema({
     nombre: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -39,9 +35,6 @@ const UsuarioSchema = new mongoose.Schema({
 });
 const Usuario = mongoose.model("Usuario", UsuarioSchema);
 
-// ==========================================
-// 2. MODELO DE EVENTOS (ACTUALIZADO PARA MENSAJES)
-// ==========================================
 const EventoSchema = new mongoose.Schema({
     titulo: String,
     fecha: String,
@@ -52,8 +45,8 @@ const EventoSchema = new mongoose.Schema({
     limiteAsistentes: Number, 
     listaInvitados: [String],
     tokenCliente: String,
-    telefonoOrganizador: String, // 🟢 NUEVO: Aquí guardaremos el número del cliente
-    mensajes: [{ nombre: String, texto: String }], 
+    telefonoOrganizador: String, // Para WhatsApp del cliente
+    mensajes: [{ nombre: String, texto: String }], // Buzón de graduación
     pendientes: [{ 
         nombrePrincipal: String, 
         acompanantes: [String],
@@ -64,9 +57,6 @@ const EventoSchema = new mongoose.Schema({
 });
 const Evento = mongoose.model("Evento", EventoSchema);
 
-// ==========================================
-// 3. CANDADO DE SEGURIDAD (MIDDLEWARE)
-// ==========================================
 const verificarToken = (req, res, next) => {
     const token = req.header("Authorization");
     if (!token) return res.status(401).json({ error: "Acceso denegado. Se necesita un token." });
@@ -81,9 +71,6 @@ const verificarToken = (req, res, next) => {
     }
 };
 
-// ==========================================
-// 4. RUTAS DE AUTENTICACIÓN
-// ==========================================
 app.post("/api/auth/registro", async (req, res) => {
     try {
         const { nombre, email, password } = req.body;
@@ -118,26 +105,7 @@ app.post("/api/auth/login", async (req, res) => {
     }
 });
 
-// ==========================================
-// 5. RUTAS DE EVENTOS
-// ==========================================
 app.get("/", (req, res) => res.json({ estado: "Online - Sistema de Invitaciones" }));
-
-// 🟢 NUEVA RUTA: Actualizar el tema del evento
-app.put("/api/eventos/:id/tema", verificarToken, async (req, res) => {
-    try {
-        const evento = await Evento.findOneAndUpdate(
-            { _id: req.params.id, creadorId: req.usuario.id }, // Aseguramos que el evento sea de este Admin
-            { tipo: req.body.tipo }, // Cambiamos el tema
-            { new: true }
-        );
-        if (!evento) return res.status(404).json({ error: "Evento no encontrado o no autorizado" });
-        res.json({ ok: true, mensaje: "Tema actualizado con éxito" });
-    } catch (error) {
-        res.status(500).json({ error: "Error al actualizar el tema" });
-    }
-});
-
 
 app.get("/api/eventos", verificarToken, async (req, res) => {
     try {
@@ -154,7 +122,7 @@ app.post("/api/eventos", verificarToken, async (req, res) => {
         const evento = new Evento({
             ...req.body,
             asistentes: [],
-            mensajes: [], // Iniciamos el buzón vacío
+            mensajes: [],
             pendientes: [],
             tokenCliente: tokenGenerado,
             creadorId: req.usuario.id 
@@ -184,7 +152,8 @@ app.get("/api/eventos/compartido/:token", async (req, res) => {
             titulo: evento.titulo, fecha: evento.fecha, lugar: evento.lugar,
             asistentes: evento.asistentes, pendientes: evento.pendientes,
             limiteAsistentes: evento.limiteAsistentes,
-            mensajes: evento.mensajes, // 🟢 Enviamos los mensajes al dashboard del graduado
+            mensajes: evento.mensajes,
+            telefonoOrganizador: evento.telefonoOrganizador,
             totalLista: evento.listaInvitados ? evento.listaInvitados.length : 0
         });
     } catch (error) {
@@ -192,7 +161,21 @@ app.get("/api/eventos/compartido/:token", async (req, res) => {
     }
 });
 
-// 🟢 RUTA RSVP ACTUALIZADA PARA CAPTURAR EL MENSAJE
+// 🟢 RUTA PARA CAMBIAR TEMA DE COLORES
+app.put("/api/eventos/:id/tema", verificarToken, async (req, res) => {
+    try {
+        const evento = await Evento.findOneAndUpdate(
+            { _id: req.params.id, creadorId: req.usuario.id }, 
+            { tipo: req.body.tipo }, 
+            { new: true }
+        );
+        if (!evento) return res.status(404).json({ error: "Evento no encontrado o no autorizado" });
+        res.json({ ok: true, mensaje: "Tema actualizado con éxito" });
+    } catch (error) {
+        res.status(500).json({ error: "Error al actualizar el tema" });
+    }
+});
+
 app.post("/api/eventos/:id/rsvp", async (req, res) => {
     try {
         const evento = await Evento.findById(req.params.id);
@@ -201,7 +184,7 @@ app.post("/api/eventos/:id/rsvp", async (req, res) => {
         const nombrePrincipal = req.body.nombrePrincipal ? req.body.nombrePrincipal.trim() : "";
         const acompanantes = req.body.acompanantes || []; 
         const telefono = req.body.telefono ? req.body.telefono.trim() : ""; 
-        const mensajeTexto = req.body.mensaje ? req.body.mensaje.trim() : ""; // 🟢 Capturamos el mensaje
+        const mensajeTexto = req.body.mensaje ? req.body.mensaje.trim() : ""; 
 
         if (!nombrePrincipal) return res.status(400).json({ error: "El nombre principal es requerido" });
 
@@ -217,9 +200,8 @@ app.post("/api/eventos/:id/rsvp", async (req, res) => {
             
             if (!estaEnLista) {
                 const yaPendiente = evento.pendientes.some(p => p.nombrePrincipal.toLowerCase() === nombrePrincipal.toLowerCase());
-                if (yaPendiente) return res.status(400).json({ error: "Ya enviaste una solicitud. Está en revisión." });
+                if (yaPendiente) return res.status(400).json({ error: "Ya enviaste una solicitud." });
 
-                // Guardamos en lista de espera (incluyendo su mensaje)
                 evento.pendientes.push({ nombrePrincipal, acompanantes, telefono, mensaje: mensajeTexto });
                 await evento.save();
                 return res.json({ ok: true, waitlist: true, mensaje: "Aprobación pendiente" });
@@ -231,7 +213,6 @@ app.post("/api/eventos/:id/rsvp", async (req, res) => {
             return res.status(403).json({ error: `El evento está lleno. Quedan ${cuposRestantes} cupos.` });
         }
 
-        // Si pasó directo (VIP o sin lista), guardamos asistencia y el mensaje al buzón
         evento.asistentes.push(nombrePrincipal);
         acompanantes.forEach(nombreExtra => {
             if (nombreExtra.trim()) evento.asistentes.push(`${nombreExtra.trim()} (Acompañante de ${nombrePrincipal})`);
@@ -248,7 +229,6 @@ app.post("/api/eventos/:id/rsvp", async (req, res) => {
     }
 });
 
-// 🟢 CUANDO APRUEBAS A ALGUIEN, SU MENSAJE PASA AL BUZÓN OFICIAL
 app.post("/api/eventos/compartido/:token/aprobar", async (req, res) => {
     try {
         const evento = await Evento.findOne({ tokenCliente: req.params.token });
