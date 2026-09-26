@@ -5,8 +5,7 @@ const invitadoVIP = params.get("invitado");
 
 let intervaloContador; 
 let imagenActual = 0; 
-let telefonoDelCliente = ""; // 🟢 Guardará el número
-
+let telefonoDelCliente = ""; 
 
 function formatearFecha(fechaIso) {
     if (!fechaIso) return "Fecha por definir";
@@ -34,8 +33,14 @@ async function cargarEvento() {
         document.getElementById("titulo").innerText = evento.titulo || "Evento";
         document.getElementById("fecha").innerText = formatearFecha(evento.fecha);
         document.getElementById("lugar").innerText = evento.lugar || "";
-        // 🟢 NUEVO: Guardamos el número si el admin lo configuró
+        
         telefonoDelCliente = evento.telefonoOrganizador || ""; 
+
+        // 🟢 NUEVO: Mostrar observaciones si existen
+        if (evento.observaciones && evento.observaciones.trim() !== "") {
+            document.getElementById("observaciones-texto").innerText = evento.observaciones;
+            document.getElementById("contenedor-observaciones").style.display = "block";
+        }
 
         if (evento.imagenes && evento.imagenes.length > 0) {
             const contenedorCarrusel = document.getElementById("carrusel");
@@ -164,7 +169,6 @@ async function confirmar(event) {
         document.getElementById("btn-add-acompanante").style.display = "none";
         btnConfirmar.style.display = "none";
 
-        // Preparar WhatsApp
         let mensajeWa = "";
         if (data.waitlist) {
             mensajeWa = `¡Hola! Acabo de enviar mi solicitud de asistencia para *${tituloEvento}*. Mi nombre es ${nombrePrincipal}. Quedo a la espera de tu confirmación. ⏳`;
@@ -173,11 +177,9 @@ async function confirmar(event) {
             mensajeWa = `¡Hola! Acabo de confirmar mi asistencia a *${tituloEvento}*${textoExtras}. Mi nombre es ${nombrePrincipal}. ¡Ahí nos vemos! 🎉`;
         }
         
-        // 🟢 NUEVO: Lógica dinámica de WhatsApp
         let baseWa = telefonoDelCliente ? `https://wa.me/${telefonoDelCliente}` : `https://wa.me/`;
         const urlWa = `${baseWa}?text=${encodeURIComponent(mensajeWa)}`;
 
-        // Mensaje de Éxito en pantalla
         const mensajeExito = document.createElement("div");
         mensajeExito.style.textAlign = "center";
         mensajeExito.style.marginTop = "10px";
